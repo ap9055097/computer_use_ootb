@@ -99,6 +99,8 @@ class AnthropicActor:
             self.client = AnthropicVertex()
         elif provider == APIProvider.BEDROCK:
             self.client = AnthropicBedrock()
+        else:
+            self.client = Anthropic(api_key=api_key)
 
     def __call__(
         self, 
