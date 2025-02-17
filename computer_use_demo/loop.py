@@ -176,6 +176,9 @@ def sampling_loop_sync(
             output_callback=output_callback,
             selected_screen=selected_screen
         )
+        
+    elif actor_model == "claude-3-5-sonnet-20241022":
+        ...
 
     else:
         raise ValueError(f"Actor Model {actor_model} not supported")
