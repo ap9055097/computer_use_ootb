@@ -21,6 +21,9 @@ from anthropic.types.beta import BetaToolComputerUse20241022Param
 from .base import BaseAnthropicTool, ToolError, ToolResult
 from .run import run
 
+import re
+from pynput.keyboard import Controller
+
 OUTPUT_DIR = "./tmp/outputs"
 
 TYPING_DELAY_MS = 12
@@ -61,6 +64,11 @@ class ComputerToolOptions(TypedDict):
     display_height_px: int
     display_width_px: int
     display_number: int | None
+
+
+def contains_thai(text):
+    # Regular expression to match Thai characters
+    return bool(re.search('[\u0E00-\u0E7F]', text))
 
 
 def chunks(s: str, chunk_size: int) -> list[str]:
@@ -252,7 +260,11 @@ class ComputerTool(BaseAnthropicTool):
                 return ToolResult(output=f"Pressed keys: {text}")
             
             elif action == "type":
-                pyautogui.typewrite(text, interval=TYPING_DELAY_MS / 1000)  # Convert ms to seconds
+                if contains_thai(text):
+                    keyboard = Controller()
+                    keyboard.type(text)
+                else:
+                    pyautogui.typewrite(text, interval=TYPING_DELAY_MS / 1000)  # Convert ms to seconds
                 screenshot_base64 = (await self.screenshot()).base64_image
                 return ToolResult(output=text, base64_image=screenshot_base64)
 
