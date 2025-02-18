@@ -47,11 +47,14 @@ def setup_state(state):
     # -------------------------------
     if "planner_model" not in state:
         state["planner_model"] = "gpt-4o"  # default
+        state["planner_model"] = "claude-3-5-sonnet-20241022"  # default
     if "actor_model" not in state:
         state["actor_model"] = "ShowUI"    # default
+        state["actor_model"] = "claude-3-5-sonnet-20241022"    # default
 
     if "planner_provider" not in state:
         state["planner_provider"] = "openai"  # default
+        state["planner_provider"] = "anthropic"  # default
     if "actor_provider" not in state:
         state["actor_provider"] = "local"    # default
 
