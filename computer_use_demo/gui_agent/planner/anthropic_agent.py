@@ -123,7 +123,7 @@ class AnthropicActor:
             tools=self.tool_collection.to_params(),
             # betas=["computer-use-2024-10-22"],
             betas=["computer-use-2025-01-24"],
-            thinking={"type": "enabled", "budget_tokens": self.max_tokens},
+            thinking={"type": "enabled", "budget_tokens": 1024},
         )
 
         self.api_response_callback(cast(APIResponse[BetaMessage], raw_response))
