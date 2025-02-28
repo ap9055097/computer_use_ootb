@@ -404,8 +404,6 @@ class ComputerTool(BaseAnthropicTool):
         ):
             if text is not None:
                 raise ToolError(f"text is not accepted for {action}")
-            if coordinate is not None:
-                raise ToolError(f"coordinate is not accepted for {action}")
 
             if action == "screenshot":
                 return await self.screenshot()
