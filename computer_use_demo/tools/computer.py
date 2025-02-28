@@ -40,6 +40,14 @@ Action = Literal[
     "double_click",
     "screenshot",
     "cursor_position",
+    
+    "hold_key",
+    "left_mouse_down",
+    "left_mouse_up",
+    "left_click_drag",
+    "triple_click",
+    "scroll",
+    "wait",
 ]
 
 
@@ -110,7 +118,7 @@ class ComputerTool(BaseAnthropicTool):
     """
 
     name: Literal["computer"] = "computer"
-    api_type: Literal["computer_20241022"] = "computer_20241022"
+    api_type: Literal["computer_20241022", "computer_20250124"] = "computer_20250124"
     width: int
     height: int
     display_num: int | None
@@ -193,117 +201,117 @@ class ComputerTool(BaseAnthropicTool):
         self.bbox = bbox
         
 
-    async def __call__(
-        self,
-        *,
-        action: Action,
-        text: str | None = None,
-        coordinate: tuple[int, int] | None = None,
-        **kwargs,
-    ):  
-        print(f"action: {action}, text: {text}, coordinate: {coordinate}")
-        action = self.action_conversion.get(action, action)
+    # async def __call__(
+    #     self,
+    #     *,
+    #     action: Action,
+    #     text: str | None = None,
+    #     coordinate: tuple[int, int] | None = None,
+    #     **kwargs,
+    # ):  
+    #     print(f"action: {action}, text: {text}, coordinate: {coordinate}")
+    #     action = self.action_conversion.get(action, action)
         
-        if action in ("mouse_move", "left_click_drag"):
-            if coordinate is None:
-                raise ToolError(f"coordinate is required for {action}")
-            if text is not None:
-                raise ToolError(f"text is not accepted for {action}")
-            if not isinstance(coordinate, (list, tuple)) or len(coordinate) != 2:
-                raise ToolError(f"{coordinate} must be a tuple of length 2")
-            # if not all(isinstance(i, int) and i >= 0 for i in coordinate):
-            if not all(isinstance(i, int) for i in coordinate):
-                raise ToolError(f"{coordinate} must be a tuple of non-negative ints")
+    #     if action in ("mouse_move", "left_click_drag"):
+    #         if coordinate is None:
+    #             raise ToolError(f"coordinate is required for {action}")
+    #         if text is not None:
+    #             raise ToolError(f"text is not accepted for {action}")
+    #         if not isinstance(coordinate, (list, tuple)) or len(coordinate) != 2:
+    #             raise ToolError(f"{coordinate} must be a tuple of length 2")
+    #         # if not all(isinstance(i, int) and i >= 0 for i in coordinate):
+    #         if not all(isinstance(i, int) for i in coordinate):
+    #             raise ToolError(f"{coordinate} must be a tuple of non-negative ints")
             
-            if self.is_scaling:
-                x, y = self.scale_coordinates(
-                    ScalingSource.API, coordinate[0], coordinate[1]
-                )
-            else:
-                x, y = coordinate
+    #         if self.is_scaling:
+    #             x, y = self.scale_coordinates(
+    #                 ScalingSource.API, coordinate[0], coordinate[1]
+    #             )
+    #         else:
+    #             x, y = coordinate
 
-            # print(f"scaled_coordinates: {x}, {y}")
-            # print(f"offset: {self.offset_x}, {self.offset_y}")
+    #         # print(f"scaled_coordinates: {x}, {y}")
+    #         # print(f"offset: {self.offset_x}, {self.offset_y}")
             
-            x += self.offset_x
-            y += self.offset_y
+    #         x += self.offset_x
+    #         y += self.offset_y
 
-            print(f"mouse move to {x}, {y}")
+    #         print(f"mouse move to {x}, {y}")
             
-            if action == "mouse_move":
-                pyautogui.moveTo(x, y)
-                return ToolResult(output=f"Moved mouse to ({x}, {y})")
-            elif action == "left_click_drag":
-                current_x, current_y = pyautogui.position()
-                pyautogui.dragTo(x, y, duration=0.5)  # Adjust duration as needed
-                return ToolResult(output=f"Dragged mouse from ({current_x}, {current_y}) to ({x}, {y})")
+    #         if action == "mouse_move":
+    #             pyautogui.moveTo(x, y)
+    #             return ToolResult(output=f"Moved mouse to ({x}, {y})")
+    #         elif action == "left_click_drag":
+    #             current_x, current_y = pyautogui.position()
+    #             pyautogui.dragTo(x, y, duration=0.5)  # Adjust duration as needed
+    #             return ToolResult(output=f"Dragged mouse from ({current_x}, {current_y}) to ({x}, {y})")
 
-        if action in ("key", "type"):
-            if text is None:
-                raise ToolError(f"text is required for {action}")
-            if coordinate is not None:
-                raise ToolError(f"coordinate is not accepted for {action}")
-            if not isinstance(text, str):
-                raise ToolError(output=f"{text} must be a string")
+    #     if action in ("key", "type"):
+    #         if text is None:
+    #             raise ToolError(f"text is required for {action}")
+    #         if coordinate is not None:
+    #             raise ToolError(f"coordinate is not accepted for {action}")
+    #         if not isinstance(text, str):
+    #             raise ToolError(output=f"{text} must be a string")
 
-            if action == "key":
-                # Handle key combinations
-                keys = text.split('+')
-                for key in keys:
-                    key = self.key_conversion.get(key.strip(), key.strip())
-                    key = key.lower()
-                    pyautogui.keyDown(key)  # Press down each key
-                for key in reversed(keys):
-                    key = self.key_conversion.get(key.strip(), key.strip())
-                    key = key.lower()
-                    pyautogui.keyUp(key)    # Release each key in reverse order
-                return ToolResult(output=f"Pressed keys: {text}")
+    #         if action == "key":
+    #             # Handle key combinations
+    #             keys = text.split('+')
+    #             for key in keys:
+    #                 key = self.key_conversion.get(key.strip(), key.strip())
+    #                 key = key.lower()
+    #                 pyautogui.keyDown(key)  # Press down each key
+    #             for key in reversed(keys):
+    #                 key = self.key_conversion.get(key.strip(), key.strip())
+    #                 key = key.lower()
+    #                 pyautogui.keyUp(key)    # Release each key in reverse order
+    #             return ToolResult(output=f"Pressed keys: {text}")
             
-            elif action == "type":
-                if contains_thai(text):
-                    keyboard = Controller()
-                    keyboard.type(text)
-                else:
-                    pyautogui.typewrite(text, interval=TYPING_DELAY_MS / 1000)  # Convert ms to seconds
-                screenshot_base64 = (await self.screenshot()).base64_image
-                return ToolResult(output=text, base64_image=screenshot_base64)
+    #         elif action == "type":
+    #             if contains_thai(text):
+    #                 keyboard = Controller()
+    #                 keyboard.type(text)
+    #             else:
+    #                 pyautogui.typewrite(text, interval=TYPING_DELAY_MS / 1000)  # Convert ms to seconds
+    #             screenshot_base64 = (await self.screenshot()).base64_image
+    #             return ToolResult(output=text, base64_image=screenshot_base64)
 
-        if action in (
-            "left_click",
-            "right_click",
-            "double_click",
-            "middle_click",
-            "screenshot",
-            "cursor_position",
-            "left_press",
-        ):
-            if text is not None:
-                raise ToolError(f"text is not accepted for {action}")
-            if coordinate is not None:
-                raise ToolError(f"coordinate is not accepted for {action}")
+    #     if action in (
+    #         "left_click",
+    #         "right_click",
+    #         "double_click",
+    #         "middle_click",
+    #         "screenshot",
+    #         "cursor_position",
+    #         "left_press",
+    #     ):
+    #         if text is not None:
+    #             raise ToolError(f"text is not accepted for {action}")
+    #         if coordinate is not None:
+    #             raise ToolError(f"coordinate is not accepted for {action}")
 
-            if action == "screenshot":
-                return await self.screenshot()
-            elif action == "cursor_position":
-                x, y = pyautogui.position()
-                x, y = self.scale_coordinates(ScalingSource.COMPUTER, x, y)
-                return ToolResult(output=f"X={x},Y={y}")
-            else:
-                if action == "left_click":
-                    pyautogui.click()
-                elif action == "right_click":
-                    pyautogui.rightClick()
-                elif action == "middle_click":
-                    pyautogui.middleClick()
-                elif action == "double_click":
-                    pyautogui.doubleClick()
-                elif action == "left_press":
-                    pyautogui.mouseDown()
-                    time.sleep(1)
-                    pyautogui.mouseUp()
-                return ToolResult(output=f"Performed {action}")
+    #         if action == "screenshot":
+    #             return await self.screenshot()
+    #         elif action == "cursor_position":
+    #             x, y = pyautogui.position()
+    #             x, y = self.scale_coordinates(ScalingSource.COMPUTER, x, y)
+    #             return ToolResult(output=f"X={x},Y={y}")
+    #         else:
+    #             if action == "left_click":
+    #                 pyautogui.click()
+    #             elif action == "right_click":
+    #                 pyautogui.rightClick()
+    #             elif action == "middle_click":
+    #                 pyautogui.middleClick()
+    #             elif action == "double_click":
+    #                 pyautogui.doubleClick()
+    #             elif action == "left_press":
+    #                 pyautogui.mouseDown()
+    #                 time.sleep(1)
+    #                 pyautogui.mouseUp()
+    #             return ToolResult(output=f"Performed {action}")
             
-        raise ToolError(f"Invalid action: {action}")
+    #     raise ToolError(f"Invalid action: {action}")
     
     
     def sync_call(
@@ -312,6 +320,10 @@ class ComputerTool(BaseAnthropicTool):
         action: Action,
         text: str | None = None,
         coordinate: tuple[int, int] | None = None,
+        duration: int | None = None,
+        scroll_amount: int | None = None,
+        scroll_direction: Literal["up", "down", "left", "right"] | None = None,
+        start_coordinate: tuple[int, int] | None = None,
         **kwargs,
     ):
         print(f"action: {action}, text: {text}, coordinate: {coordinate}")
@@ -406,7 +418,84 @@ class ComputerTool(BaseAnthropicTool):
                     time.sleep(1)
                     pyautogui.mouseUp()
                 return ToolResult(output=f"Performed {action}")
+        
+        
+        ####### claude 3.7
+        if action == "hold_key":
+            # 'text' contains the key to hold; 'duration' specifies how long to hold it
+            if text is None:
+                raise ToolError("text is required for hold_key action")
+            if duration is None:
+                raise ToolError("duration is required for hold_key action")
+            pyautogui.keyDown(text)
+            time.sleep(duration)
+            pyautogui.keyUp(text)
+            return ToolResult(output=f"Performed {action}")
+
+        if action == "left_mouse_down":
+            pyautogui.mouseDown(button='left')
+            return ToolResult(output=f"Performed {action}")
+
+        if action == "left_mouse_up":
+            pyautogui.mouseUp(button='left')
+            return ToolResult(output=f"Performed {action}")
+
+        if action == "left_click_drag":
+            # This action requires both a starting coordinate and an ending coordinate
+            if start_coordinate is None:
+                raise ToolError("start_coordinate is required for left_click_drag action")
+            if coordinate is None:
+                raise ToolError("coordinate is required for left_click_drag action")
+            pyautogui.moveTo(start_coordinate[0], start_coordinate[1])
+            pyautogui.mouseDown(button='left')
+            pyautogui.moveTo(coordinate[0], coordinate[1])
+            pyautogui.mouseUp(button='left')
+            return ToolResult(output=f"Performed {action}")
+
+        if action == "triple_click":
+            # Triple-click by performing three consecutive clicks
+            pyautogui.click(clicks=3)
+            return ToolResult(output=f"Performed {action}")
+
+        if action == "scroll":
+            # For scrolling, a coordinate is required.
+            if coordinate is None:
+                raise ToolError("coordinate is required for scroll action")
             
+            # Check if scroll_direction is provided.
+            if scroll_direction is not None:
+                if scroll_amount is None:
+                    raise ToolError("scroll_amount is required when scroll_direction is provided")
+                
+                pyautogui.moveTo(coordinate[0], coordinate[1])
+                
+                if scroll_direction in ["up", "down"]:
+                    # For vertical scroll: positive for up, negative for down.
+                    amount = abs(scroll_amount) if scroll_direction == "up" else -abs(scroll_amount)
+                    pyautogui.scroll(amount)
+                elif scroll_direction in ["left", "right"]:
+                    # For horizontal scroll: positive for right, negative for left.
+                    amount = abs(scroll_amount) if scroll_direction == "right" else -abs(scroll_amount)
+                    pyautogui.hscroll(amount)
+                else:
+                    raise ToolError("Invalid scroll_direction")
+                
+                return ToolResult(output=f"Performed scroll {scroll_direction}")
+            
+            # Fallback: if no scroll_direction is provided, use scroll_amount for vertical scrolling.
+            if scroll_amount is None:
+                raise ToolError("scroll_amount is required for scroll action")
+            pyautogui.moveTo(coordinate[0], coordinate[1])
+            pyautogui.scroll(scroll_amount)
+            return ToolResult(output="Performed scroll")
+
+        if action == "wait":
+            # Wait for a specified duration (in seconds)
+            if duration is None:
+                raise ToolError("duration is required for wait action")
+            time.sleep(duration)
+            return ToolResult(output=f"Performed {action}")
+        ###################################
         raise ToolError(f"Invalid action: {action}")
 
     async def screenshot(self):
