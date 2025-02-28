@@ -18,7 +18,7 @@ from PIL import Image
 import gradio as gr
 from anthropic import APIResponse
 from anthropic.types import TextBlock
-from anthropic.types.beta import BetaMessage, BetaTextBlock, BetaToolUseBlock
+from anthropic.types.beta import BetaMessage, BetaTextBlock, BetaToolUseBlock, BetaThinkingBlock
 from anthropic.types.tool_use_block import ToolUseBlock
 
 from screeninfo import get_monitors
@@ -186,6 +186,8 @@ def chatbot_output_callback(message, chatbot_state, hide_images=False, sender="b
 
         elif isinstance(message, BetaTextBlock) or isinstance(message, TextBlock):
             return message.text
+        elif isinstance(message, BetaThinkingBlock):
+            return f"<thinking>{message.thinking}</thinking>"
         elif isinstance(message, BetaToolUseBlock) or isinstance(message, ToolUseBlock):
             return f"Tool Use: {message.name}\nInput: {message.input}"
         else:  
