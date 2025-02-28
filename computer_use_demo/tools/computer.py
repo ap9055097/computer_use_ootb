@@ -414,6 +414,8 @@ class ComputerTool(BaseAnthropicTool):
                 x, y = self.scale_coordinates(ScalingSource.COMPUTER, x, y)
                 return ToolResult(output=f"X={x},Y={y}")
             else:
+                if coordinate is not None:
+                    pyautogui.moveTo(coordinate[0], coordinate[1])
                 if action == "left_click":
                     pyautogui.click()
                 elif action == "right_click":
@@ -426,6 +428,11 @@ class ComputerTool(BaseAnthropicTool):
                     pyautogui.mouseDown()
                     time.sleep(1)
                     pyautogui.mouseUp()
+                elif action == "triple_click":
+                    # Triple-click by performing three consecutive clicks
+                    if coordinate is not None:
+                        pyautogui.moveTo(coordinate[0], coordinate[1])
+                    pyautogui.click(clicks=3)
                 return ToolResult(output=f"Performed {action}")
         
         ####### claude 3.7
@@ -448,6 +455,7 @@ class ComputerTool(BaseAnthropicTool):
             pyautogui.mouseUp(button='left')
             return ToolResult(output=f"Performed {action}")
 
+        
         if action == "left_click_drag":
             # This action requires both a starting coordinate and an ending coordinate
             if start_coordinate is None:
@@ -459,12 +467,7 @@ class ComputerTool(BaseAnthropicTool):
             pyautogui.moveTo(coordinate[0], coordinate[1])
             pyautogui.mouseUp(button='left')
             return ToolResult(output=f"Performed {action}")
-
-        if action == "triple_click":
-            # Triple-click by performing three consecutive clicks
-            pyautogui.click(clicks=3)
-            return ToolResult(output=f"Performed {action}")
-
+        
         if action == "scroll":
             # For scrolling, a coordinate is required.
             if coordinate is None:
