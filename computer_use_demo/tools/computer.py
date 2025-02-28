@@ -346,9 +346,6 @@ class ComputerTool(BaseAnthropicTool):
                 )
             else:
                 x, y = coordinate
-
-            # print(f"scaled_coordinates: {x}, {y}")
-            # print(f"offset: {self.offset_x}, {self.offset_y}")
             
             x += self.offset_x
             y += self.offset_y
@@ -413,7 +410,15 @@ class ComputerTool(BaseAnthropicTool):
                 return ToolResult(output=f"X={x},Y={y}")
             else:
                 if coordinate is not None:
-                    pyautogui.moveTo(coordinate[0], coordinate[1])
+                    if self.is_scaling:
+                        x, y = self.scale_coordinates(
+                            ScalingSource.API, coordinate[0], coordinate[1]
+                        )
+                    else:
+                        x, y = coordinate
+                    x += self.offset_x
+                    y += self.offset_y
+                    pyautogui.moveTo(x, y)
                 if action == "left_click":
                     pyautogui.click()
                 elif action == "right_click":
@@ -427,9 +432,6 @@ class ComputerTool(BaseAnthropicTool):
                     time.sleep(1)
                     pyautogui.mouseUp()
                 elif action == "triple_click":
-                    # Triple-click by performing three consecutive clicks
-                    if coordinate is not None:
-                        pyautogui.moveTo(coordinate[0], coordinate[1])
                     pyautogui.click(clicks=3)
                 return ToolResult(output=f"Performed {action}")
         
@@ -460,9 +462,24 @@ class ComputerTool(BaseAnthropicTool):
                 raise ToolError("start_coordinate is required for left_click_drag action")
             if coordinate is None:
                 raise ToolError("coordinate is required for left_click_drag action")
-            pyautogui.moveTo(start_coordinate[0], start_coordinate[1])
+            
+            if self.is_scaling:
+                sx, sy = self.scale_coordinates(
+                    ScalingSource.API, start_coordinate[0], start_coordinate[1]
+                )
+                x, y = self.scale_coordinates(
+                    ScalingSource.API, coordinate[0], coordinate[1]
+                )
+            else:
+                sx, sy = start_coordinate
+                x, y = coordinate
+            sx += self.offset_x
+            sy += self.offset_y
+            x += self.offset_x
+            y += self.offset_y
+            pyautogui.moveTo(sx, sy)
             pyautogui.mouseDown(button='left')
-            pyautogui.moveTo(coordinate[0], coordinate[1])
+            pyautogui.moveTo(x, y)
             pyautogui.mouseUp(button='left')
             return ToolResult(output=f"Performed {action}")
         
@@ -476,7 +493,15 @@ class ComputerTool(BaseAnthropicTool):
                 if scroll_amount is None:
                     raise ToolError("scroll_amount is required when scroll_direction is provided")
                 
-                pyautogui.moveTo(coordinate[0], coordinate[1])
+                if self.is_scaling:
+                    x, y = self.scale_coordinates(
+                        ScalingSource.API, coordinate[0], coordinate[1]
+                    )
+                else:
+                    x, y = coordinate
+                x += self.offset_x
+                y += self.offset_y
+                pyautogui.moveTo(x, y)
                 
                 if scroll_direction in ["up", "down"]:
                     # For vertical scroll: positive for up, negative for down.
