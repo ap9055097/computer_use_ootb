@@ -240,21 +240,16 @@ def process_input(user_input, state):
         only_n_most_recent_images=state["only_n_most_recent_images"],
         selected_screen=state['selected_screen'],
         showui_max_pixels=state['max_pixels'],
-        showui_awq_4bit=state['awq_4bit']
+        showui_awq_4bit=state['awq_4bit'],
+        max_loop_count=2,
     ):  
         if loop_msg is None:
             yield state['chatbot_messages'], task_actions
             logger.info("End of task. Close the loop.")
             break
             
+        yield state['chatbot_messages'], task_actions  # Yield the updated chatbot_messages to update the chatbot UI
 
-    #     yield state['chatbot_messages'], user_input  # Yield the updated chatbot_messages to update the chatbot UI
-    action_messages = [
-        # {"action": "key", "text": "Return"},
-        # {"action": "left_click"},
-        {"action": "screenshot"},
-    ]
-    yield state['chatbot_messages'], task_actions  # Yield the updated chatbot_messages to update the chatbot UI
         
 
 def process_execute_input(user_input_json, state):

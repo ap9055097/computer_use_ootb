@@ -53,7 +53,7 @@ class AnthropicExecutor:
                     name=content_block.name,
                     tool_input=cast(dict[str, Any], content_block.input),
                 ))
-                
+
                 self.output_callback(result, sender="bot")
                 
                 tool_result_content.append(

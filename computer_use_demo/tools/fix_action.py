@@ -6,8 +6,15 @@ from anthropic.types.beta import BetaToolUseBlockParam, BetaToolUseBlock
 
 from .base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
 from .computer import ComputerTool
+import re
 
 
+def replace_placeholders(text, data):
+    if not isinstance(text, str):
+        return text
+    # This pattern matches any placeholder of the form {{key}}
+    pattern = re.compile(r'\{\{(\w+)\}\}')
+    return pattern.sub(lambda match: str(data.get(match.group(1), match.group(0))), text)
 
 class FixActionTool(BaseAnthropicTool):
     """
@@ -20,7 +27,6 @@ class FixActionTool(BaseAnthropicTool):
     computer: ComputerTool = ComputerTool(selected_screen=0)
 
     def __init__(self, name: str, description: str, input_schema: dict, actions: list[dict], **kwargs):
-        print('computer params')
         super().__init__()
         self.name = name
         self.description = description
@@ -29,21 +35,21 @@ class FixActionTool(BaseAnthropicTool):
         
         ### to get target_dimension
         params = self.computer.to_params()
-        print('computer params', params)
 
     async def __call__(
         self, **kwargs
     ):
-        params = self.computer.to_params()
-        print('computer params', params)
-        print('FixActionTool kwargs', kwargs)
-        action_outputs = []
-        for action in self.actions:
+        replaced_actions = [{k: replace_placeholders(v, kwargs) for k, v in action.items()} for action in self.actions ]
+        outputs = []
+        base64_image = None
+        for action in replaced_actions:
             result = await self.computer(**action)
-            action_outputs.append(result.output)
-        print('action_outputs', action_outputs)
-        # return ToolResult(output=f"Perform {' and '.join(action_outputs)}")
-        return ToolResult(output=f"Perform tool: {self.name}")
+            if result.output:
+                outputs.append(result.output)
+            if result.base64_image:
+                base64_image=result.base64_image
+        output = " and ".join(outputs)
+        return ToolResult(output=output, base64_image=base64_image)
 
 
     def to_params(self) -> BetaToolUseBlockParam:

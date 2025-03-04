@@ -802,7 +802,6 @@ class ComputerTool(BaseAnthropicTool):
 
         # Save the screenshot
         screenshot.save(str(path))
-
         if path.exists():
             # Return a ToolResult instance instead of a dictionary
             return ToolResult(base64_image=base64.b64encode(path.read_bytes()).decode())
