@@ -12,7 +12,7 @@ from anthropic.types.beta import (
 )
 from anthropic.types import TextBlock
 from anthropic.types.beta import BetaMessage, BetaTextBlock, BetaToolUseBlock
-from ..tools import BashTool, ComputerTool, EditTool, ToolCollection, ToolResult
+from ..tools import BashTool, ComputerTool, EditTool, ToolCollection, ToolResult, FixActionTool
 
 
 class AnthropicExecutor:
@@ -20,12 +20,14 @@ class AnthropicExecutor:
         self, 
         output_callback: Callable[[BetaContentBlockParam], None], 
         tool_output_callback: Callable[[Any, str], None],
-        selected_screen: int = 0
+        selected_screen: int = 0,
+        additional_tool_collections: list[FixActionTool] = [],
     ):
         self.tool_collection = ToolCollection(
             ComputerTool(selected_screen=selected_screen),
             BashTool(),
             EditTool(),
+            *additional_tool_collections,
         )
         self.output_callback = output_callback
         self.tool_output_callback = tool_output_callback

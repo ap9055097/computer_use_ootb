@@ -31,7 +31,7 @@ logger.info(f"Found {len(screens)} screens")
 
 from computer_use_demo.loop import APIProvider, sampling_loop_sync
 
-from computer_use_demo.tools import ToolResult
+from computer_use_demo.tools import ToolResult, FixActionTool
 from computer_use_demo.tools.computer import get_screen_details
 SCREEN_NAMES, SELECTED_SCREEN_INDEX = get_screen_details()
 
@@ -150,7 +150,7 @@ def _tool_output_callback(tool_output: ToolResult, tool_id: str, tool_state: dic
     tool_state[tool_id] = tool_output
 
 
-def chatbot_output_callback(message, chatbot_state, hide_images=False, sender="bot"):
+def chatbot_output_callback(message, chatbot_state, task_actions = [], hide_images=False, sender="bot"):
     
     def _render_message(message: str | BetaTextBlock | BetaToolUseBlock | ToolResult, hide_images=False):
     
@@ -189,6 +189,7 @@ def chatbot_output_callback(message, chatbot_state, hide_images=False, sender="b
         elif isinstance(message, BetaThinkingBlock):
             return f"<thinking>{message.thinking}</thinking>"
         elif isinstance(message, BetaToolUseBlock) or isinstance(message, ToolUseBlock):
+            task_actions.append(message.input)
             return f"Tool Use: {message.name}\nInput: {message.input}"
         else:  
             return message
@@ -210,8 +211,65 @@ def chatbot_output_callback(message, chatbot_state, hide_images=False, sender="b
 def process_input(user_input, state):
     
     setup_state(state)
+    task_actions = []
+    
+    # Append the user message to state["messages"]
+    state["messages"].append(
+            {
+                "role": "user",
+                "content": [TextBlock(type="text", text=user_input)],
+            }
+        )
+
+    # Append the user's message to chatbot_messages with None for the assistant's reply
+    state['chatbot_messages'].append((user_input, None))
+    yield state['chatbot_messages'], []  # Yield to update the chatbot UI with the user's message
+    
+    # Run sampling_loop_sync with the chatbot_output_callback
+    for loop_msg in sampling_loop_sync(
+        system_prompt_suffix=state["custom_system_prompt"],
+        planner_model=state["planner_model"],
+        planner_provider=state["planner_provider"],
+        actor_model=state["actor_model"],
+        actor_provider=state["actor_provider"],
+        messages=state["messages"],
+        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], task_actions=task_actions, hide_images=state["hide_images"]),
+        tool_output_callback=partial(_tool_output_callback, tool_state=state["tools"]),
+        api_response_callback=partial(_api_response_callback, response_state=state["responses"]),
+        api_key=state["planner_api_key"],
+        only_n_most_recent_images=state["only_n_most_recent_images"],
+        selected_screen=state['selected_screen'],
+        showui_max_pixels=state['max_pixels'],
+        showui_awq_4bit=state['awq_4bit']
+    ):  
+        if loop_msg is None:
+            yield state['chatbot_messages'], task_actions
+            logger.info("End of task. Close the loop.")
+            break
+            
+
+    #     yield state['chatbot_messages'], user_input  # Yield the updated chatbot_messages to update the chatbot UI
+    action_messages = [
+        # {"action": "key", "text": "Return"},
+        # {"action": "left_click"},
+        {"action": "screenshot"},
+    ]
+    yield state['chatbot_messages'], task_actions  # Yield the updated chatbot_messages to update the chatbot UI
+        
+
+def process_execute_input(user_input_json, state):
+    
+    setup_state(state)
+    
+    # print('user_input', json.loads(user_input_json))
+    user_input_dict = json.loads(user_input_json)
+        
+    additional_tool_collections = [FixActionTool(**tool) for tool in user_input_dict.pop("tools", [])]
+    # additional_tool_collections = cast(list[FixActionTool], user_input_dict.pop("tools", []))
+    print('additional_tool_collections', additional_tool_collections)
 
     # Append the user message to state["messages"]
+    user_input = user_input_dict.pop("user_message", "")
     state["messages"].append(
             {
                 "role": "user",
@@ -238,7 +296,8 @@ def process_input(user_input, state):
         only_n_most_recent_images=state["only_n_most_recent_images"],
         selected_screen=state['selected_screen'],
         showui_max_pixels=state['max_pixels'],
-        showui_awq_4bit=state['awq_4bit']
+        showui_awq_4bit=state['awq_4bit'],
+        additional_tool_collections=additional_tool_collections
     ):  
         if loop_msg is None:
             yield state['chatbot_messages']
@@ -601,11 +660,26 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     with gr.Row():
         # submit_button = gr.Button("Submit")  # Add submit button
         with gr.Column(scale=8):
-            chat_input = gr.Textbox(show_label=False, placeholder="Type a message to send to Computer Use OOTB...", container=False)
+            chat_input = gr.Textbox(show_label=False, placeholder="Type a training message to send to Computer Use OOTB...", container=False)
         with gr.Column(scale=1, min_width=50):
             submit_button = gr.Button(value="Send", variant="primary")
+    
+    with gr.Row():
+        # submit_button = gr.Button("Submit")  # Add submit button
+        with gr.Column(scale=8):
+            chat_execute_input = gr.TextArea(show_label=False, placeholder="Type a execution message to send to Computer Use OOTB...", container=False, lines=7)
+            # chat_execute_input = gr.JSON(container=False, value={"k": "v"})
+            
+        with gr.Column(scale=1, min_width=50):
+            submit_execute_button = gr.Button(value="Exucute", variant="primary")
 
     chatbot = gr.Chatbot(label="Chatbot History", type="tuples", autoscroll=True, height=580)
+    
+    with gr.Row():
+        # submit_button = gr.Button("Submit")  # Add submit button
+        with gr.Column(scale=8):
+            chat_action_output = gr.TextArea(show_label=False, placeholder="Output", container=False, lines=7)
+            # chat_action_output = gr.JSON(container=False)
     
     planner_model.change(fn=update_planner_model, inputs=[planner_model, state], outputs=[planner_api_provider, planner_api_key, actor_model])
     planner_api_provider.change(fn=update_api_key_placeholder, inputs=[planner_api_provider, planner_model], outputs=planner_api_key)
@@ -625,14 +699,28 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     third_menu.change(fn=update_textbox, inputs=[first_menu, second_menu, third_menu], outputs=[chat_input, image_preview, hintbox])
 
     # chat_input.submit(process_input, [chat_input, state], chatbot)
-    submit_button.click(process_input, [chat_input, state], chatbot)
+    submit_button.click(process_input, [chat_input, state], [chatbot, chat_action_output])
+    submit_execute_button.click(process_execute_input, [chat_execute_input, state], chatbot)
 
     planner_api_key.change(
         fn=update_api_key,
         inputs=[planner_api_key, state],
         outputs=None
     )
+    
+    def clear_chat(state):
+        # Reset message-related state
+        state["messages"] = []
+        state["responses"] = {}
+        state["tools"] = {}
+        state['chatbot_messages'] = []
+        return state['chatbot_messages']
+    
+    chatbot.clear(clear_chat, [state], [chatbot])
+    
+    
 
-demo.launch(share=True,
+demo.launch(
+            # share=True,
             allowed_paths=["./"],
             server_port=7888)  # TODO: allowed_paths

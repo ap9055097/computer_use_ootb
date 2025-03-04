@@ -7,8 +7,8 @@ from collections.abc import Callable
 from enum import StrEnum
 
 from anthropic import APIResponse
-from anthropic.types.beta import BetaContentBlock, BetaMessage, BetaMessageParam
-from computer_use_demo.tools import ToolResult
+from anthropic.types.beta import BetaContentBlock, BetaMessage, BetaMessageParam, BetaToolUseBlock
+from computer_use_demo.tools import ToolResult, FixActionTool
 
 
 import torch
@@ -64,7 +64,9 @@ def sampling_loop_sync(
     selected_screen: int = 0,
     showui_max_pixels: int = 1344,
     showui_awq_4bit: bool = False,
-    ui_tars_url: str = ""
+    ui_tars_url: str = "",
+    max_loop_count: int = 10,
+    additional_tool_collections: list[FixActionTool] = [],
 ):
     """
     Synchronous agentic sampling loop for the assistant/tool interaction of computer use.
@@ -83,13 +85,15 @@ def sampling_loop_sync(
             api_response_callback=api_response_callback,
             max_tokens=max_tokens,
             only_n_most_recent_images=only_n_most_recent_images,
-            selected_screen=selected_screen
+            selected_screen=selected_screen,
+            additional_tool_collections=additional_tool_collections,
         )
 
         executor = AnthropicExecutor(
             output_callback=output_callback,
             tool_output_callback=tool_output_callback,
-            selected_screen=selected_screen
+            selected_screen=selected_screen,
+            additional_tool_collections=additional_tool_collections,
         )
 
         loop_mode = "unified"
@@ -210,6 +214,10 @@ def sampling_loop_sync(
                 "content": tool_result_content,
                 "role": "user"
             })
+            
+            showui_loop_count += 1
+            if max_loop_count <= showui_loop_count:
+                return messages
 
     elif loop_mode == "planner + actor":
         # ------------------------------------------------------
@@ -277,3 +285,37 @@ def sampling_loop_sync(
 
             # Increment loop counter
             showui_loop_count += 1
+
+
+def actions_loop_sync(
+    *,
+    messages: list[BetaMessageParam],
+    actions: list[BetaToolUseBlock],
+    output_callback: Callable[[BetaContentBlock], None],
+    tool_output_callback: Callable[[ToolResult, str], None],
+    selected_screen: int = 0,
+):
+    """
+    Synchronous agentic sampling loop for the assistant/tool interaction of computer use.
+    """
+    
+    executor = AnthropicExecutor(
+        output_callback=output_callback,
+        tool_output_callback=tool_output_callback,
+        selected_screen=selected_screen
+    )
+    
+    while True:
+        # Let the executor process that response, yielding any intermediate messages
+        for message, tool_result_content in executor(actions, messages):
+            yield message
+
+        # If executor didn't produce further content, we're done
+        if not tool_result_content:
+            return messages
+
+        # If there is more tool content, treat that as user input
+        messages.append({
+            "content": tool_result_content,
+            "role": "user"
+        })

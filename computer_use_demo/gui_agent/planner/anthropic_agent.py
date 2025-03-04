@@ -24,7 +24,7 @@ from anthropic.types.beta import (
 from anthropic.types import TextBlock
 from anthropic.types.beta import BetaMessage, BetaTextBlock, BetaToolUseBlock
 
-from computer_use_demo.tools import BashTool, ComputerTool, EditTool, ToolCollection, ToolResult
+from computer_use_demo.tools import BashTool, ComputerTool, EditTool, ToolCollection, ToolResult, FixActionTool
 
 from PIL import Image
 from io import BytesIO
@@ -68,6 +68,7 @@ class AnthropicActor:
         only_n_most_recent_images: int | None = None,
         selected_screen: int = 0,
         print_usage: bool = True,
+        additional_tool_collections: list[FixActionTool] = [],
     ):
         self.model = model
         self.model = "claude-3-7-sonnet-20250219"
@@ -83,7 +84,13 @@ class AnthropicActor:
             ComputerTool(selected_screen=selected_screen),
             BashTool(),
             EditTool(),
+            # *additional_tool_collections,
         )
+        if additional_tool_collections:
+            self.tool_collection = ToolCollection(
+                *additional_tool_collections,
+            )
+            
 
         self.system = (
             f"{SYSTEM_PROMPT}{' ' + system_prompt_suffix if system_prompt_suffix else ''}"

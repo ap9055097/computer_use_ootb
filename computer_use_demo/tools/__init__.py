@@ -4,6 +4,7 @@ from .collection import ToolCollection
 from .computer import ComputerTool
 from .edit import EditTool
 from .screen_capture import get_screenshot
+from .fix_action import FixActionTool
 
 __ALL__ = [
     BashTool,
@@ -13,4 +14,5 @@ __ALL__ = [
     ToolCollection,
     ToolResult,
     get_screenshot,
+    FixActionTool,
 ]
