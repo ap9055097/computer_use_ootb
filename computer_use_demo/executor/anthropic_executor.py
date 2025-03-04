@@ -11,7 +11,7 @@ from anthropic.types.beta import (
     BetaToolResultBlockParam,
 )
 from anthropic.types import TextBlock
-from anthropic.types.beta import BetaMessage, BetaTextBlock, BetaToolUseBlock
+from anthropic.types.beta import BetaMessage, BetaTextBlock, BetaToolUseBlock, BetaThinkingBlock
 from ..tools import BashTool, ComputerTool, EditTool, ToolCollection, ToolResult, FixActionTool
 
 
@@ -84,6 +84,8 @@ def _message_display_callback(messages):
                 display_messages.append((msg["content"][0].text, None))  # User message
             elif isinstance(msg["content"][0], BetaTextBlock):
                 display_messages.append((None, msg["content"][0].text))  # Bot message
+            elif isinstance(msg["content"][0], BetaThinkingBlock):
+                display_messages.append((None, f'<thinking>{msg["content"][0].thinking}</thinking>'))  # Bot message
             elif isinstance(msg["content"][0], BetaToolUseBlock):
                 display_messages.append((None, f"Tool Use: {msg['content'][0].name}\nInput: {msg['content'][0].input}"))  # Bot message
             elif isinstance(msg["content"][0], Dict) and msg["content"][0]["content"][-1]["type"] == "image":
