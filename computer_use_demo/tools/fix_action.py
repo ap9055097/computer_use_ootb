@@ -44,11 +44,14 @@ class FixActionTool(BaseAnthropicTool):
         base64_image = None
         for action in replaced_actions:
             result = await self.computer(**action)
+            await asyncio.sleep(1)
             if result.output:
                 outputs.append(result.output)
             if result.base64_image:
                 base64_image=result.base64_image
         output = " and ".join(outputs)
+        if not output:
+            output = None
         return ToolResult(output=output, base64_image=base64_image)
 
 
