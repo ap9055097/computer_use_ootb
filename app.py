@@ -292,7 +292,8 @@ def process_execute_input(user_input_json, state):
         selected_screen=state['selected_screen'],
         showui_max_pixels=state['max_pixels'],
         showui_awq_4bit=state['awq_4bit'],
-        additional_tool_collections=additional_tool_collections
+        additional_tool_collections=additional_tool_collections,
+        max_loop_count=100,
     ):  
         if loop_msg is None:
             yield state['chatbot_messages']
