@@ -241,7 +241,7 @@ def process_input(user_input, state):
         selected_screen=state['selected_screen'],
         showui_max_pixels=state['max_pixels'],
         showui_awq_4bit=state['awq_4bit'],
-        max_loop_count=10,
+        max_loop_count=30,
     ):  
         if loop_msg is None:
             yield state['chatbot_messages'], task_actions
