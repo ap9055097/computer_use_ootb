@@ -387,8 +387,9 @@ class ComputerTool(BaseAnthropicTool):
                     keyboard.type(text)
                 else:
                     pyautogui.typewrite(text, interval=TYPING_DELAY_MS / 1000)  # Convert ms to seconds
-                screenshot_base64 = (await self.screenshot()).base64_image
-                return ToolResult(output=text, base64_image=screenshot_base64)
+                # screenshot_base64 = (await self.screenshot()).base64_image
+                # return ToolResult(output=text, base64_image=screenshot_base64)
+                return ToolResult(output=f"Type: {text}")
 
         if action in (
             "left_click",
