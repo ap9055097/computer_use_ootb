@@ -28,7 +28,8 @@ class _BashSession:
 
         self._process = await asyncio.create_subprocess_shell(
             self.command,
-            shell=False,
+            # shell=False,
+            shell=True,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
