@@ -1,0 +1,1 @@
+gunicorn -w 1 -k uvicorn.workers.UvicornWorker app:app --bind 127.0.0.1:7888
