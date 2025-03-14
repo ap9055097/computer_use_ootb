@@ -30,6 +30,7 @@ class _BashSession:
             self.command,
             # shell=False,
             shell=True,
+            bash_executable = r"C:\Program Files\Git\bin\bash.exe",
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,

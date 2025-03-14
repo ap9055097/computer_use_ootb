@@ -6,6 +6,7 @@ from anthropic.types.beta import BetaToolUseBlockParam, BetaToolUseBlock
 
 from .base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
 from .computer import ComputerTool
+from .bash import BashTool
 import re
 
 
@@ -20,11 +21,12 @@ class FixActionTool(BaseAnthropicTool):
     """
     A tool that allows the agent to run fixed (by user) computer use actions.
     """
-    name: ClassVar[Literal["bash"]] = "bash"
+    name: ClassVar[Literal["FixAction"]] = "FixAction"
     description: str
     input_schema: dict
     actions: list[dict] = []
     computer: ComputerTool = ComputerTool(selected_screen=0)
+    bash: BashTool = BashTool()
 
     def __init__(self, name: str, description: str, input_schema: dict, actions: list[dict], **kwargs):
         super().__init__()
@@ -41,14 +43,22 @@ class FixActionTool(BaseAnthropicTool):
     ):
         replaced_actions = [{k: replace_placeholders(v, kwargs) for k, v in action.items()} for action in self.actions ]
         outputs = []
+        outputs = []
         base64_image = None
         for action in replaced_actions:
-            result = await self.computer(**action)
-            await asyncio.sleep(1)
-            if result.output:
-                outputs.append(result.output)
-            if result.base64_image:
-                base64_image=result.base64_image
+            if "command" in action:
+                result = await self.bash(**action)
+                if result.output:
+                    outputs.append(result.output)
+                if result.error:
+                    outputs.append(f"bash error: {result.error}")
+            else:
+                result = await self.computer(**action)
+                await asyncio.sleep(1)
+                if result.output:
+                    outputs.append(result.output)
+                if result.base64_image:
+                    base64_image=result.base64_image
         output = " and ".join(outputs)
         if not output:
             output = None
