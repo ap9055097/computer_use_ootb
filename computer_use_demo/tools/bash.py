@@ -13,8 +13,8 @@ class _BashSession:
     _started: bool
     _process: asyncio.subprocess.Process
 
-    # command: str = "/bin/bash"
-    command: str = r"C:\Program Files\Git\bin\bash.exe",
+    command: str = "/bin/bash"
+    # command: str = r"C:\Program Files\Git\bin\bash.exe",
     _output_delay: float = 0.2  # seconds
     _timeout: float = 120.0  # seconds
     _sentinel: str = "<<exit>>"
