@@ -1,5 +1,6 @@
 from .base import CLIResult, ToolResult
-from .bash import BashTool
+# from .bash import BashTool
+from .bash_no_session import BashToolNoSession as BashTool
 from .collection import ToolCollection
 from .computer import ComputerTool
 from .edit import EditTool
