@@ -720,3 +720,18 @@ demo.launch(
             share=True,
             allowed_paths=["./"],
             server_port=7888)  # TODO: allowed_paths
+
+
+
+import signal
+import sys
+import uvicorn
+
+def signal_handler(sig, frame):
+    print("Shutting down gracefully...")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="127.0.0.1", port=7888, loop="asyncio")
