@@ -6,7 +6,7 @@ from anthropic.types.beta import BetaToolUseBlockParam, BetaToolUseBlock
 
 from .base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
 from .computer import ComputerTool
-from .bash import BashTool
+from .bash_no_session import BashToolNoSession
 import re
 
 

@@ -4,6 +4,13 @@ uvicorn app:app --host 127.0.0.1 --port 7888
 
 uvicorn app:app --host 127.0.0.1 --port 7888 --loop asyncio
 
+start /B uvicorn app:app --host 127.0.0.1 --port 7888 --loop asyncio > uvicorn.log 2>&1
+tasklist /v | findstr /i uvicorn
+taskkill /F /IM python.exe
+
+cd computer_use_ootb && .venv\Scripts\activate && uvicorn app:app --host 127.0.0.1 --port 7888 --loop asyncio
+cd computer_use_ootb && .venv\Scripts\activate
+
 
 
 #!/bin/bash
@@ -34,5 +41,13 @@ curl -X POST -F "file=@$FILE_PATH" "$API_URL"
 # Optionally, add authentication or additional fields:
 # curl -X POST -H "Authorization: Bearer YOUR_TOKEN" -F "file=@$FILE_PATH" -F "param=value" "$API_URL"
 
+curl -X 'POST' 'https://dev-api.via.link/api/llm-agent/job/b5471937-a348-4cae-b99d-ded11e61ea56/upload-output-file' -H 'accept: */*' -H 'Content-Type: multipart/form-data' -F "file=@$FILE_PATH"
 
-DOWNLOAD_DIR="/c/Users/Administrator/Downloads"; API_URL="http://example.com/upload"; LATEST_FILE=$(ls -t "$DOWNLOAD_DIR" | head -n 1); [ -z "$LATEST_FILE" ] && { echo "No files found in $DOWNLOAD_DIR"; exit 1; }; FILE_PATH="$DOWNLOAD_DIR/$LATEST_FILE"; echo "Uploading file: $FILE_PATH";
+
+{{FileUploadCallbackUrl}} --> API_URL
+
+DOWNLOAD_DIR="/c/Users/Administrator/Downloads"; API_URL="https://dev-api.via.link/api/llm-agent/job/ae4fef85-d2f4-462e-9238-10d4c40bbacb/upload-output-file"; LATEST_FILE=$(ls -t "$DOWNLOAD_DIR" | head -n 1); [ -z "$LATEST_FILE" ] && { echo "No files found in $DOWNLOAD_DIR"; exit 1; }; FILE_PATH="$DOWNLOAD_DIR/$LATEST_FILE"; echo "Uploading file: $FILE_PATH"; curl -X 'POST' "$API_URL" -H 'accept: */*' -H 'Content-Type: multipart/form-data' -F "file=@$FILE_PATH"
+
+DOWNLOAD_DIR="/c/Users/Administrator/Downloads"; API_URL="https://ktkt97kpqa.ap-southeast-1.awsapprunner.com/api/llm-agent/job/ae4fef85-d2f4-462e-9238-10d4c40bbacb/upload-output-file"; LATEST_FILE=$(ls -t "$DOWNLOAD_DIR" | head -n 1); [ -z "$LATEST_FILE" ] && { echo "No files found in $DOWNLOAD_DIR"; exit 1; }; FILE_PATH="$DOWNLOAD_DIR/$LATEST_FILE"; echo "Uploading file: $FILE_PATH"; curl -X 'POST' "$API_URL" -H 'accept: */*' -H 'Content-Type: multipart/form-data' -F "file=@$FILE_PATH"
+
+https://ktkt97kpqa.ap-southeast-1.awsapprunner.com/
