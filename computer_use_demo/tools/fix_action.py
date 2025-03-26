@@ -26,7 +26,7 @@ class FixActionTool(BaseAnthropicTool):
     input_schema: dict
     actions: list[dict] = []
     computer: ComputerTool = ComputerTool(selected_screen=0)
-    bash: BashTool = BashTool()
+    bash: BashToolNoSession = BashToolNoSession()
 
     def __init__(self, name: str, description: str, input_schema: dict, actions: list[dict], **kwargs):
         super().__init__()
