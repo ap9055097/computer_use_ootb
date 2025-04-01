@@ -96,7 +96,7 @@ def find_tool_image_similarity(
     base64_image: str,
     embedded_image_algo: str,
     image_pool: dict[str, list[str]],
-    aggregate_methed: Literal["min", "max", "avg"] = "avg",
+    aggregate_methed: Literal["min", "max", "avg"] = "min",
 ) -> ToolResult:
     """
     Find the most similar image in the pool to the given image.
