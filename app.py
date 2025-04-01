@@ -174,15 +174,28 @@ def chatbot_output_callback(message, chatbot_state, task_actions = [], hide_imag
         # render tool result
         if is_tool_result:
             message = cast(ToolResult, message)
+            # if message.output:
+            #     return message.output
+            # if message.error:
+            #     return f"Error: {message.error}"
+            # if message.base64_image and not hide_images:
+            #     # somehow can't display via gr.Image
+            #     # image_data = base64.b64decode(message.base64_image)
+            #     # return gr.Image(value=Image.open(io.BytesIO(image_data)))
+            #     return f'<img src="data:image/png;base64,{message.base64_image}">'
+
+            message_outputs = []
             if message.output:
-                return message.output
+                message_outputs.append(message.output)
             if message.error:
-                return f"Error: {message.error}"
+                message_outputs.append(f"Error: {message.error}")
             if message.base64_image and not hide_images:
                 # somehow can't display via gr.Image
                 # image_data = base64.b64decode(message.base64_image)
                 # return gr.Image(value=Image.open(io.BytesIO(image_data)))
-                return f'<img src="data:image/png;base64,{message.base64_image}">'
+                message_outputs.append(f'<img src="data:image/png;base64,{message.base64_image}">')
+            if message_outputs:
+                return message_outputs
 
         elif isinstance(message, BetaTextBlock) or isinstance(message, TextBlock):
             return message.text
@@ -198,10 +211,18 @@ def chatbot_output_callback(message, chatbot_state, task_actions = [], hide_imag
     # processing Anthropic messages
     message = _render_message(message, hide_images)
     
-    if sender == "bot":
-        chatbot_state.append((None, message))
-    else:
-        chatbot_state.append((message, None))
+    if isinstance(message, str):
+        message = [message]
+
+    for m in message:
+        if sender == "bot":
+            chatbot_state.append((None, m))
+        else:
+            chatbot_state.append((m, None))
+    # if sender == "bot":
+    #     chatbot_state.append((None, message))
+    # else:
+    #     chatbot_state.append((message, None))
 
     # Create a concise version of the chatbot state for logging
     concise_state = [(truncate_string(user_msg), truncate_string(bot_msg)) for user_msg, bot_msg in chatbot_state]
@@ -258,10 +279,16 @@ def process_execute_input(user_input_json, state):
     
     # print('user_input', json.loads(user_input_json))
     user_input_dict = json.loads(user_input_json)
-        
-    additional_tool_collections = [FixActionTool(**tool) for tool in user_input_dict.pop("tools", [])]
+    
+    embedded_image_algo = user_input_dict.pop("embedded_image_algo", "dhash")
+    tools = user_input_dict.pop("tools", [])
+    image_pool = {}
+    for tool in tools:
+        image_pool[tool["name"]] = tool.get("embedded_images", [])
+    # image_pool = [{tool["name"]: tool.get("embedded_images", [])} for tool in tools]
+    additional_tool_collections = [FixActionTool(embedded_image_algo=embedded_image_algo, image_pool=image_pool, **tool) for tool in tools]
     # additional_tool_collections = cast(list[FixActionTool], user_input_dict.pop("tools", []))
-    print('additional_tool_collections', additional_tool_collections)
+    # print('additional_tool_collections', additional_tool_collections)
 
     # Append the user message to state["messages"]
     user_input = user_input_dict.pop("user_message", "")
@@ -723,15 +750,3 @@ demo.launch(
 
 
 
-import signal
-import sys
-import uvicorn
-
-def signal_handler(sig, frame):
-    print("Shutting down gracefully...")
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-
-if __name__ == "__main__":
-    uvicorn.run("app:app", host="127.0.0.1", port=7888, loop="asyncio")
