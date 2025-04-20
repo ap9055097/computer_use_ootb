@@ -14,6 +14,7 @@ from functools import partial
 from pathlib import Path
 from typing import cast, Dict
 from PIL import Image
+from io import BytesIO
 
 import gradio as gr
 from anthropic import APIResponse
@@ -31,8 +32,9 @@ logger.info(f"Found {len(screens)} screens")
 
 from computer_use_demo.loop import APIProvider, sampling_loop_sync
 
-from computer_use_demo.tools import ToolResult, FixActionTool
+from computer_use_demo.tools import ToolResult, FixActionTool, ComputerTool
 from computer_use_demo.tools.computer import get_screen_details
+from computer_use_demo.tools.fix_action import compute_hash
 SCREEN_NAMES, SELECTED_SCREEN_INDEX = get_screen_details()
 
 API_KEY_FILE = "./api_keys.json"
@@ -150,7 +152,7 @@ def _tool_output_callback(tool_output: ToolResult, tool_id: str, tool_state: dic
     tool_state[tool_id] = tool_output
 
 
-def chatbot_output_callback(message, chatbot_state, task_actions = [], hide_images=False, sender="bot"):
+def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses = [], hide_images=False, sender="bot"):
     
     def _render_message(message: str | BetaTextBlock | BetaToolUseBlock | ToolResult, hide_images=False):
     
@@ -203,6 +205,7 @@ def chatbot_output_callback(message, chatbot_state, task_actions = [], hide_imag
             return f"<thinking>{message.thinking}</thinking>"
         elif isinstance(message, BetaToolUseBlock) or isinstance(message, ToolUseBlock):
             task_actions.append(message.input)
+            tooluses.append({message.name: message.input})
             return f"Tool Use: {message.name}\nInput: {message.input}"
         else:  
             return message
@@ -329,6 +332,90 @@ def process_execute_input(user_input_json, state):
             
 
         yield state['chatbot_messages']  # Yield the updated chatbot_messages to update the chatbot UI
+        
+        
+def process_execute_input_v2(user_input_json, state):
+    
+    setup_state(state)
+    tooluses = []
+    
+    # print('user_input', json.loads(user_input_json))
+    user_input_dict = json.loads(user_input_json)
+    
+    embedded_image_algo = user_input_dict.pop("embedded_image_algo", "dhash")
+    tools = user_input_dict.pop("tools", [])
+    image_pool = {}
+    for tool in tools:
+        image_pool[tool["name"]] = tool.get("embedded_images", [])
+    # image_pool = [{tool["name"]: tool.get("embedded_images", [])} for tool in tools]
+    additional_tool_collections = [FixActionTool(embedded_image_algo=embedded_image_algo, image_pool=image_pool, **tool) for tool in tools]
+    # additional_tool_collections = cast(list[FixActionTool], user_input_dict.pop("tools", []))
+    # print('additional_tool_collections', additional_tool_collections)
+
+    # Append the user message to state["messages"]
+    user_input = user_input_dict.pop("user_message", "")
+    state["messages"].append(
+            {
+                "role": "user",
+                "content": [TextBlock(type="text", text=user_input)],
+            }
+        )
+
+    # Append the user's message to chatbot_messages with None for the assistant's reply
+    state['chatbot_messages'].append((user_input, None))
+    yield state['chatbot_messages'], tooluses  # Yield to update the chatbot UI with the user's message
+
+    # Run sampling_loop_sync with the chatbot_output_callback
+    for loop_msg in sampling_loop_sync(
+        system_prompt_suffix=state["custom_system_prompt"],
+        planner_model=state["planner_model"],
+        planner_provider=state["planner_provider"],
+        actor_model=state["actor_model"],
+        actor_provider=state["actor_provider"],
+        messages=state["messages"],
+        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses),
+        tool_output_callback=partial(_tool_output_callback, tool_state=state["tools"]),
+        api_response_callback=partial(_api_response_callback, response_state=state["responses"]),
+        api_key=state["planner_api_key"],
+        only_n_most_recent_images=state["only_n_most_recent_images"],
+        selected_screen=state['selected_screen'],
+        showui_max_pixels=state['max_pixels'],
+        showui_awq_4bit=state['awq_4bit'],
+        additional_tool_collections=additional_tool_collections,
+        max_loop_count=100,
+    ):  
+        if loop_msg is None:
+            yield state['chatbot_messages'], tooluses
+            logger.info("End of task. Close the loop.")
+            break
+            
+
+        yield state['chatbot_messages'], tooluses  # Yield the updated chatbot_messages to update the chatbot UI
+
+
+
+def capture_screenshot_dhash():
+    # Capture the screenshot. This returns a PIL Image.
+    def base64_to_pil(base64_string: str) -> Image.Image:
+        # Sometimes the base64 string may include metadata like "data:image/png;base64,"
+        # We remove this header if it's present.
+        if base64_string.startswith("data:"):
+            base64_string = base64_string.split(",")[1]
+        
+        # Decode the base64 string into bytes
+        image_data = base64.b64decode(base64_string)
+        
+        # Create a BytesIO stream from the bytes data
+        image_bytes = BytesIO(image_data)
+        
+        # Open the image with PIL
+        image = Image.open(image_bytes)
+        return image
+    computer = ComputerTool(selected_screen=0)
+    computer.to_params()
+    toolresult = asyncio.run(computer.screenshot())
+    pil_image = base64_to_pil(toolresult.base64_image)
+    return pil_image, compute_hash(pil_image)
 
 
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
@@ -694,15 +781,32 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
             # chat_execute_input = gr.JSON(container=False, value={"k": "v"})
             
         with gr.Column(scale=1, min_width=50):
-            submit_execute_button = gr.Button(value="Exucute", variant="primary")
+            with gr.Row(scale=1):
+                submit_execute_button = gr.Button(value="Exucute", variant="primary")
+            with gr.Row(scale=1):
+                submit_execute_button_v2 = gr.Button(value="Exucute V2", variant="primary")
 
     chatbot = gr.Chatbot(label="Chatbot History", type="tuples", autoscroll=True, height=580)
     
     with gr.Row():
         # submit_button = gr.Button("Submit")  # Add submit button
         with gr.Column(scale=8):
-            chat_action_output = gr.TextArea(show_label=False, placeholder="Output", container=False, lines=7)
+            chat_action_output = gr.TextArea(show_label=False, placeholder="Action Output", container=False, lines=7)
             # chat_action_output = gr.JSON(container=False)
+        with gr.Column(scale=8):
+            chat_tool_output = gr.TextArea(show_label=False, placeholder="Tool Output", container=False, lines=7)
+
+    with gr.Row():
+        # submit_button = gr.Button("Submit")  # Add submit button
+        with gr.Column(scale=8):
+            screenshot_image = gr.Image(type="pil", label="Your Screenshot")
+        with gr.Column(scale=8):
+            screenshot_image_base64 = gr.TextArea(show_label=False, placeholder="base64 screenshot", container=False, lines=7)
+        with gr.Column(scale=1):
+            gr.Markdown("# Screenshot App")
+            screenshot_button = gr.Button("Take Screenshot")
+    # Bind the button's click event to the capture_screenshot function
+    screenshot_button.click(fn=capture_screenshot_dhash, outputs=[screenshot_image, screenshot_image_base64])
     
     planner_model.change(fn=update_planner_model, inputs=[planner_model, state], outputs=[planner_api_provider, planner_api_key, actor_model])
     planner_api_provider.change(fn=update_api_key_placeholder, inputs=[planner_api_provider, planner_model], outputs=planner_api_key)
@@ -724,6 +828,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     # chat_input.submit(process_input, [chat_input, state], chatbot)
     submit_button.click(process_input, [chat_input, state], [chatbot, chat_action_output])
     submit_execute_button.click(process_execute_input, [chat_execute_input, state], chatbot)
+    submit_execute_button_v2.click(process_execute_input_v2, [chat_execute_input, state], [chatbot, chat_tool_output])
 
     planner_api_key.change(
         fn=update_api_key,
@@ -744,7 +849,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
 
 demo.launch(
-            share=True,
+            # share=True,
+            share=False,
             allowed_paths=["./"],
             server_port=7888)  # TODO: allowed_paths
 

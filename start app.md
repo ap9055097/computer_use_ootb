@@ -51,3 +51,60 @@ DOWNLOAD_DIR="/c/Users/Administrator/Downloads"; API_URL="https://dev-api.via.li
 DOWNLOAD_DIR="/c/Users/Administrator/Downloads"; API_URL="https://ktkt97kpqa.ap-southeast-1.awsapprunner.com/api/llm-agent/job/ae4fef85-d2f4-462e-9238-10d4c40bbacb/upload-output-file"; LATEST_FILE=$(ls -t "$DOWNLOAD_DIR" | head -n 1); [ -z "$LATEST_FILE" ] && { echo "No files found in $DOWNLOAD_DIR"; exit 1; }; FILE_PATH="$DOWNLOAD_DIR/$LATEST_FILE"; echo "Uploading file: $FILE_PATH"; curl -X 'POST' "$API_URL" -H 'accept: */*' -H 'Content-Type: multipart/form-data' -F "file=@$FILE_PATH"
 
 https://ktkt97kpqa.ap-southeast-1.awsapprunner.com/
+
+
+{
+    "tool_logs" [
+        [
+            {
+                "FillItemDetailsTool": {'item_barcode': '8ZP0447700100', 'item_qty': '59', 'item_unit': 'EA'}
+            }   ### สินค้าพอ
+        ],
+        [
+            {
+                "FillItemDetailsTool": {'item_barcode': '8ZP0447700102', 'item_qty': '19', 'item_unit': 'EA'}
+            },
+            {
+                "CreditSalesContinueTool": {}
+            }   ### Stock ในระบบไม่พอ
+        ],
+        [
+            {
+                "FillItemDetailsTool": {'item_barcode': '8ZP0447700101', 'item_qty': '70', 'item_unit': 'EA'}
+            },
+            {
+                "CreditSalesOneTimeDeliveryTool": {"item_confirm_qty": '29}
+            }   ### สินค้าไม่พอ
+        ],
+        [
+            {
+                "FillItemDetailsTool": {'item_barcode': '8ZP0447700101', 'item_qty': '70', 'item_unit': 'EA'}
+            },
+            {
+                "ProductAllocationPopupDismissTool": {}
+            },
+            {
+                "CreditSalesContinueTool": {}
+            }   ### product allocation แบบ Stock เป็น 0
+        ],
+        [
+            {
+                "FillItemDetailsTool": {'item_barcode': '8ZP0447700101', 'item_qty': '70', 'item_unit': 'EA'}
+            },
+            {
+                "ProductAllocationPopupDismissTool": {}
+            },
+            {
+                "CreditSalesOneTimeDeliveryTool": {"item_confirm_qty": '29}
+            }   ### product allocation แบบสินค้าไม่พอ
+        ],
+        [
+            {
+                "FillItemDetailsTool": {'item_barcode': '8ZP0447700103', 'item_qty': '5', 'item_unit': 'EA'}
+            },
+            {
+                "NotPossibleToDeteminePopupDismissTool": {}
+            }   ### หา Material code ในระบบไม่เจอ ไม่สามารถ Mapping ได้
+        ],
+    ]
+}

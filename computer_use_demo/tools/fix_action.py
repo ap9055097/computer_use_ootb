@@ -144,7 +144,7 @@ def load_image_from_base64(b64_string):
     image_bytes = BytesIO(image_data)
     return Image.open(image_bytes)
 
-def compute_hash(image, algo_config):
+def compute_hash(image, algo_config = {"algo": "dhash"}):
     """
     Compute image hash based on a configuration dictionary.
 
