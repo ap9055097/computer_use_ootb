@@ -46,7 +46,6 @@ class FixActionTool(BaseAnthropicTool):
         self.image_pool = image_pool
         self.tooluse_log = tooluse_log
         
-        
         ### to get target_dimension
         params = self.computer.to_params()
 

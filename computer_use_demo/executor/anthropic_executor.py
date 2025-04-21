@@ -45,7 +45,7 @@ class AnthropicExecutor:
         tool_result_content: list[BetaToolResultBlockParam] = []
         for content_block in cast(list[BetaContentBlock], response.content):
             
-            self.output_callback(content_block, sender="bot")
+            # self.output_callback(content_block, sender="bot")
             # Execute the tool
             if content_block.type == "tool_use":
                 # Run the asynchronous tool execution in a synchronous context
@@ -53,13 +53,16 @@ class AnthropicExecutor:
                     name=content_block.name,
                     tool_input=cast(dict[str, Any], content_block.input),
                 ))
-
+                self.output_callback(content_block, enable_tooluse_log=result.tooluse_log, sender="bot")
+                
                 self.output_callback(result, sender="bot")
                 
                 tool_result_content.append(
                     _make_api_tool_result(result, content_block.id)
                 )
                 self.tool_output_callback(result, content_block.id)
+            else:
+                self.output_callback(content_block, sender="bot")
 
             # Craft messages based on the content_block
             # Note: to display the messages in the gradio, you should organize the messages in the following way (user message, bot message)

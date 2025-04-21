@@ -152,7 +152,7 @@ def _tool_output_callback(tool_output: ToolResult, tool_id: str, tool_state: dic
     tool_state[tool_id] = tool_output
 
 
-def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses = [], hide_images=False, sender="bot"):
+def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses = [], enable_tooluse_log = False, hide_images=False, sender="bot"):
     
     def _render_message(message: str | BetaTextBlock | BetaToolUseBlock | ToolResult, hide_images=False):
     
@@ -205,9 +205,10 @@ def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses 
             return f"<thinking>{message.thinking}</thinking>"
         elif isinstance(message, BetaToolUseBlock) or isinstance(message, ToolUseBlock):
             task_actions.append(message.input)
-            # if getattr(message, "tooluse_log", False):
-                # tooluses.append({message.name: message.input})
-            tooluses.append({message.name: message.input})
+            print('enable_tooluse_log', enable_tooluse_log)
+            if enable_tooluse_log:
+                tooluses.append({message.name: message.input})
+            # tooluses.append({message.name: message.input})
             return f"Tool Use: {message.name}\nInput: {message.input}"
         else:  
             return message

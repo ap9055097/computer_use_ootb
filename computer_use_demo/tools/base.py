@@ -48,6 +48,7 @@ class ToolResult:
             error=combine_fields(self.error, other.error),
             base64_image=combine_fields(self.base64_image, other.base64_image, False),
             system=combine_fields(self.system, other.system),
+            tooluse_log=combine_fields(self.tooluse_log, other.tooluse_log, False),
         )
 
     def replace(self, **kwargs):
