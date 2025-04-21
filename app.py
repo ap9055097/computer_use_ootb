@@ -205,6 +205,8 @@ def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses 
             return f"<thinking>{message.thinking}</thinking>"
         elif isinstance(message, BetaToolUseBlock) or isinstance(message, ToolUseBlock):
             task_actions.append(message.input)
+            # if getattr(message, "tooluse_log", False):
+                # tooluses.append({message.name: message.input})
             tooluses.append({message.name: message.input})
             return f"Tool Use: {message.name}\nInput: {message.input}"
         else:  
@@ -344,6 +346,7 @@ def process_execute_input_v2(user_input_json, state):
     
     embedded_image_algo = user_input_dict.pop("embedded_image_algo", "dhash")
     tools = user_input_dict.pop("tools", [])
+    print('tools log', tools)
     image_pool = {}
     for tool in tools:
         image_pool[tool["name"]] = tool.get("embedded_images", [])
@@ -849,8 +852,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
 
 demo.launch(
-            # share=True,
-            share=False,
+            share=True,
+            # share=False,
             allowed_paths=["./"],
             server_port=7888)  # TODO: allowed_paths
 

@@ -34,8 +34,9 @@ class FixActionTool(BaseAnthropicTool):
     image_pool: dict[str, list[str]] = {} ## key -> name: str,  values -> embedded_images: list[str]}
     computer: ComputerTool = ComputerTool(selected_screen=0)
     bash: BashToolNoSession = BashToolNoSession()
+    tooluse_log: bool = False
 
-    def __init__(self, name: str, description: str, input_schema: dict, actions: list[dict], embedded_image_algo: Literal["dhash"] = "dhash", image_pool: dict[str, list[str]] = {}, **kwargs):
+    def __init__(self, name: str, description: str, input_schema: dict, actions: list[dict], embedded_image_algo: Literal["dhash"] = "dhash", image_pool: dict[str, list[str]] = {}, tooluse_log=False, **kwargs):
         super().__init__()
         self.name = name
         self.description = description
@@ -43,6 +44,7 @@ class FixActionTool(BaseAnthropicTool):
         self.actions = actions
         self.embedded_image_algo = embedded_image_algo
         self.image_pool = image_pool
+        self.tooluse_log = tooluse_log
         
         
         ### to get target_dimension
@@ -81,7 +83,7 @@ class FixActionTool(BaseAnthropicTool):
         output = " and ".join(outputs)
         if not output:
             output = None
-        return ToolResult(output=output, base64_image=base64_image)
+        return ToolResult(output=output, base64_image=base64_image, tooluse_log=self.tooluse_log)
 
 
     def to_params(self) -> BetaToolUseBlockParam:

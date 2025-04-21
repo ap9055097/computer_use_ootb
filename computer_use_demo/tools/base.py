@@ -28,6 +28,7 @@ class ToolResult:
     error: str | None = None
     base64_image: str | None = None
     system: str | None = None
+    tooluse_log: bool | None = None
 
     def __bool__(self):
         return any(getattr(self, field.name) for field in fields(self))
