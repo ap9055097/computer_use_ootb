@@ -42,7 +42,7 @@ API_KEY_FILE = "./api_keys.json"
 WARNING_TEXT = "⚠️ Security Alert: Do not provide access to sensitive accounts or data, as malicious web content can hijack Agent's behavior. Keep monitor on the Agent's actions."
 
 
-import sys
+import sys, pyautogui
 # For Python ≥3.7: switch stdout/stderr to UTF-8
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
