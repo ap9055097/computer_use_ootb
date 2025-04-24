@@ -26,17 +26,19 @@ nssm install RPAService "C:\Users\Administrator\computer_use_ootb\run_rpa_gradio
 mkdir C:\Users\Administrator\computer_use_ootb\logs
 icacls "C:\Users\Administrator\computer_use_ootb\logs" /grant "NT AUTHORITY\LocalSystem:F"
 
-
 nssm set RPAService AppDirectory C:\Users\Administrator\computer_use_ootb
 
 nssm set RPAService AppStdout C:\Users\Administrator\computer_use_ootb\logs\gradio.out.log
 nssm set RPAService AppStderr C:\Users\Administrator\computer_use_ootb\logs\gradio.err.log
+nssm set RPAService AppNoConsole 1
+nssm set RPAService AppEnvironmentExtra PYTHONUNBUFFERED=1
+nssm set RPAService AppStdoutCreationDisposition 4
+nssm set RPAService AppStderrCreationDisposition 4
 
 nssm start RPAService
 nssm status RPAService
 nssm restart RPAService
 nssm stop RPAService
-
 
 nssm remove RPAService confirm
 
