@@ -46,6 +46,8 @@ import sys
 # For Python ≥3.7: switch stdout/stderr to UTF-8
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
+pyautogui.FAILSAFE = False
+
 
 def setup_state(state):
 
