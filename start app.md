@@ -13,8 +13,24 @@ cd computer_use_ootb && .venv\Scripts\activate
 
 
 setx /M PATH "%PATH%;C:\nssm\win64"
+setx /M PATH "%PATH%;C:\Users\Administrator\Downloads\nssm-2.24\nssm-2.24\win64"
 
+nssm install RPAService "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\python.exe" uvicorn app:app --host 127.0.0.1 --port 7888 
 
+nssm install RPAService ^
+  "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\python.exe" ^
+  -m uvicorn app:app --host 127.0.0.1 --port 7888
+  
+
+nssm set RPAService AppDirectory C:\Users\Administrator\computer_use_ootb
+
+nssm set RPAService AppStdout C:\Users\Administrator\computer_use_ootb\logs\gradio.out.log
+nssm set RPAService AppStderr C:\Users\Administrator\computer_use_ootb\logs\gradio.err.log
+
+nssm start RPAService
+nssm status RPAService
+nssm restart RPAService
+nssm stop RPAService
 
 #!/bin/bash
 
