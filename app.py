@@ -853,9 +853,9 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
 
 demo.launch(
-            # share=True,
-            share=False,
-            # prevent_thread_lock=True,
+            share=True,
+            # share=False,
+            prevent_thread_lock=True,
             allowed_paths=["./"],
             server_port=7888)  # TODO: allowed_paths
 
@@ -868,4 +868,9 @@ demo.launch(
 #             server_port=7888)  # TODO: allowed_paths
 # print(tunnel_adress)
 # queue.block_thread()
+# block forever so Python doesn’t exit
+import time
+while True:
+    time.sleep(60)
+
 
