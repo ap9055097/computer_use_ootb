@@ -861,8 +861,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 
 queue = demo.queue()
 _, _, tunnel_adress = queue.launch(
-            share=True,
-            # share=False,
+            # share=True,
+            share=False,
             prevent_thread_lock=True,
             allowed_paths=["./"],
             server_port=7888)  # TODO: allowed_paths
