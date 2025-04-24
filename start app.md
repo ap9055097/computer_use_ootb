@@ -20,7 +20,12 @@ nssm install RPAService "C:\Users\Administrator\AppData\Local\Programs\Python\Py
 nssm install RPAService ^
   "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\python.exe" ^
   -m uvicorn app:app --host 127.0.0.1 --port 7888
-  
+
+nssm install RPAService "C:\Users\Administrator\computer_use_ootb\run_rpa_gradio_server.bat"
+
+mkdir C:\Users\Administrator\computer_use_ootb\logs
+icacls "C:\Users\Administrator\computer_use_ootb\logs" /grant "NT AUTHORITY\LocalSystem:F"
+
 
 nssm set RPAService AppDirectory C:\Users\Administrator\computer_use_ootb
 
@@ -31,6 +36,9 @@ nssm start RPAService
 nssm status RPAService
 nssm restart RPAService
 nssm stop RPAService
+
+
+nssm remove RPAService confirm
 
 #!/bin/bash
 
