@@ -12,6 +12,9 @@ cd computer_use_ootb && .venv\Scripts\activate && uvicorn app:app --host 127.0.0
 cd computer_use_ootb && .venv\Scripts\activate
 
 
+setx /M PATH "%PATH%;C:\nssm\win64"
+
+
 
 #!/bin/bash
 
@@ -54,7 +57,7 @@ https://ktkt97kpqa.ap-southeast-1.awsapprunner.com/
 
 
 {
-    "tool_logs" [
+    "tooluse_log" [
         [
             {
                 "FillItemDetailsTool": {'item_barcode': '8ZP0447700100', 'item_qty': '59', 'item_unit': 'EA'}

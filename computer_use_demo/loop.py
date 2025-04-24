@@ -278,7 +278,8 @@ def sampling_loop_sync(
 
             logger.info(
                 f"End of loop {showui_loop_count + 1}. "
-                f"Messages: {str(messages)[:100000]}. "
+                # f"Messages: {str(messages)[:100000]}. "
+                f"Messages: {str(messages)[:100]}. "
                 f"Total cost: $USD{planner.total_cost:.5f}"
             )
 
