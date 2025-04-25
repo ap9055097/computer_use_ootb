@@ -12,6 +12,8 @@ cd computer_use_ootb && .venv\Scripts\activate && uvicorn app:app --host 127.0.0
 cd computer_use_ootb && .venv\Scripts\activate
 
 
+qwinsta
+
 setx /M PATH "%PATH%;C:\nssm\win64"
 setx /M PATH "%PATH%;C:\Users\Administrator\Downloads\nssm-2.24\nssm-2.24\win64"
 
