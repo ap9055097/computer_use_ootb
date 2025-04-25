@@ -35,6 +35,9 @@ nssm set RPAService AppEnvironmentExtra PYTHONUNBUFFERED=1
 nssm set RPAService AppStdoutCreationDisposition 4
 nssm set RPAService AppStderrCreationDisposition 4
 
+nssm reset RPAService ObjectName
+nssm set RPAService Type SERVICE_INTERACTIVE_PROCESS
+
 nssm start RPAService
 nssm status RPAService
 nssm restart RPAService
