@@ -41,7 +41,7 @@ class FixActionTool(BaseAnthropicTool):
         self.name = name
         self.description = description
         self.input_schema = input_schema
-        self.actions = actions
+        self.actions = actions or []
         self.embedded_image_algo = embedded_image_algo
         self.image_pool = image_pool
         self.tooluse_log = tooluse_log

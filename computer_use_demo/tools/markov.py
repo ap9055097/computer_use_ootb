@@ -217,6 +217,7 @@ class MarkovRPA:
             iterations += 1
             # Take a screenshot of the current screen
             screenshot_base64 = capture_screenshot_dhash()  # Returns a PIL Image of the screen:contentReference[oaicite:9]{index=9}
+            self.output_callback(ToolResult(base64_image=screenshot_base64), sender="bot")
             # Determine the best matching tool in the current state
             best_tool_name = self.current_state.find_tool_image_similarity(screenshot_base64)
             # print(f"[Robot] Current state: '{self.current_state.name}'. Best match tool: '{best_tool_name}'.")
