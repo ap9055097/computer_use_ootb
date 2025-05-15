@@ -31,7 +31,7 @@ from computer_use_demo.tools import BashTool, ComputerTool, EditTool, ToolCollec
 from PIL import Image
 from io import BytesIO
 import gradio as gr
-from typing import Dict
+from typing import Dict, Literal
 
 
 
@@ -129,37 +129,69 @@ class AnthropicExtractor:
     def __call__(
         self, 
         *,
-        image_base64: str,
-        input_schema: dict,
+        image_base64: str = None,
+        text: str = None,
+        input_schema: dict = {},
+        input_type: Literal["text", "screenshot"] = "screenshot",
+        input_instruction: str =  None,
     ):
         schema_str = json.dumps(input_schema, indent=2)
+        # system_prompt = (
+        #     "You are an OCR specialist. Given an image, extract **only** the following fields "
+        #     "and output them as a single JSON object exactly conforming to this JSON Schema:\n\n"
+        #     f"{schema_str}\n\n"
+        #     "Respond **only** with the JSON object—no extra text."
+        # )
         system_prompt = (
-            "You are an OCR specialist. Given an image, extract **only** the following fields "
-            "and output them as a single JSON object exactly conforming to this JSON Schema:\n\n"
+            "You are a data-extraction specialist. Given the following input—which may be "
+            "either an image or a plain-text message—extract **only** the fields defined "
+            "in this JSON Schema and output a single JSON object that exactly conforms:\n\n"
             f"{schema_str}\n\n"
-            "Respond **only** with the JSON object—no extra text."
+            "Respond **only** with the JSON object, no extra text, no markdown."
         )
         
         """
         Generate a response given history messages.
         """
-        image_block = {
-            "type": "image",
-            "source": {
-                "type": "base64",               # Required
-                "media_type": "image/png",      # Must match your file format
-                "data": image_base64                 # The actual base64 string
-            }
-        }
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "Here is the image to process:"},
-                    image_block,
-                ]
-            }
-        ]
+        content_blocks = []
+        if input_type == "screenshot":
+            content_blocks.append({"type": "text", "text": "Here is the image to process:"})
+            content_blocks.append({
+                "type": "image",
+                "source": {
+                    "type": "base64",               # Required
+                    "media_type": "image/png",      # Must match your file format
+                    "data": image_base64                 # The actual base64 string
+                }
+            })
+            
+        else:
+            content_blocks.append({"type": "text", "text": "Here is the text to process:"})
+            content_blocks.append({"type": "text", "text": text})
+        if input_instruction:
+            content_blocks.append({"type": "text", "text": input_instruction})
+        # print('content_blocks', content_blocks)
+        messages = [{
+            "role": "user",
+            "content": content_blocks
+        }]
+        # image_block = {
+        #     "type": "image",
+        #     "source": {
+        #         "type": "base64",               # Required
+        #         "media_type": "image/png",      # Must match your file format
+        #         "data": image_base64                 # The actual base64 string
+        #     }
+        # }
+        # messages = [
+        #     {
+        #         "role": "user",
+        #         "content": [
+        #             {"type": "text", "text": "Here is the image to process:"},
+        #             image_block,
+        #         ]
+        #     }
+        # ]
 
         
         raw_response = self.client.messages.with_raw_response.create(

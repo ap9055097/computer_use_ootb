@@ -46,6 +46,8 @@ class MarkovTool:
         self, 
         name: str, 
         description: str = None,
+        input_type: Literal["text", "screenshot"] = "screenshot",
+        input_instruction: str = None,
         input_schema: dict = None,
         embedded_images: list[dict[str, str]] = None, 
         actions: list[str] | None = None, 
@@ -56,6 +58,8 @@ class MarkovTool:
     ):
         self.name = name
         self.description = description
+        self.input_type = input_type
+        self.input_instruction = input_instruction
         self.input_schema = input_schema or {}
         self.embedded_images = embedded_images
         self.actions = actions
@@ -64,10 +68,20 @@ class MarkovTool:
         self.output_callback = output_callback or (lambda x: None)
         
     
-    def execute_actions(self, image_base64: str = None) -> ToolResult:
-        
+    def execute_actions(
+        self, 
+        image_base64: str = None,
+        text: str = None,
+    ) -> ToolResult:
+        # print(f"[Tool] Executing actions for tool '{self.name}'... text: {text}")
         if self.input_schema and self.input_schema.get("properties"):
-            input_value = self.extractor(image_base64=image_base64)
+            input_value = self.extractor(
+                image_base64=image_base64, 
+                text=text, 
+                input_schema=self.input_schema,
+                input_type=self.input_type,
+                input_instruction=self.input_instruction,
+            )
         else:
             input_value = {}
         print(f"[Tool] Extracted input value: {input_value}")
@@ -89,7 +103,7 @@ class MarkovTool:
                 input_schema=self.input_schema,
                 actions=self.actions,
                 tooluse_log=False,
-            )(*input_value)
+            )(**input_value)
         )
         return result
 
@@ -166,7 +180,8 @@ class MarkovRPA:
             self, 
             initial_state_name: str, 
             output_callback: callable = None,
-            states: list[MarkovState] | dict[str, MarkovState] = None
+            states: list[MarkovState] | dict[str, MarkovState] = None,
+            global_input: str = None,
         ):
         """
         The Robot orchestrates the RPA process through various states.
@@ -180,6 +195,7 @@ class MarkovRPA:
             self.states = {state.name: state for state in states}
         self.current_state = self.states[initial_state_name]
         self.output_callback = output_callback or (lambda x: None)
+        self.global_input = global_input
         
         
     def run(self, max_iterations=10, timeout_seconds=None):
@@ -240,7 +256,10 @@ class MarkovRPA:
             message = f"[Robot] Executing actions for tool '{best_tool.name}'..."
             self.output_callback(message, sender="bot")
             yield message
-            result: ToolResult = best_tool.execute_actions(image_base64=screenshot_base64)
+            result: ToolResult = best_tool.execute_actions(
+                image_base64=screenshot_base64,
+                text=self.global_input,
+                )
             # print(f"[Robot] Tool '{best_tool.name}' executed. Output: {result.output}")
             message = f"[Robot] Tool '{best_tool.name}' executed. Output: {result.output}"
             self.output_callback(message, sender="bot")

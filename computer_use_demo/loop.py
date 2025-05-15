@@ -390,6 +390,7 @@ def markov_actions_loop(
     
     states = markov_message.pop('states')
     initial_state_name = markov_message.pop('initial_state_name')
+    global_input = markov_message.pop('global_input', None)
     
     markov_states = []
     # Create MarkovState objects from the states
@@ -402,12 +403,16 @@ def markov_actions_loop(
             tool_name = tool.pop('name')
             tool_description = tool.pop('description', None)
             embedded_images = tool.pop('embedded_images', None)
+            input_type = tool.pop('input_type', "screenshot")
+            input_schema = tool.pop('input_schema', {})
             actions = tool.pop('actions', None)
             target_state = tool.pop('target_state', None)
             markov_tool = MarkovTool(
                 name=tool_name,
                 description=tool_description,
                 embedded_images=embedded_images,
+                input_type=input_type,
+                input_schema=input_schema,
                 actions=actions,
                 target_state=target_state,
                 extractor=extractor,
@@ -427,7 +432,8 @@ def markov_actions_loop(
     markov_rpa = MarkovRPA(
         initial_state_name=initial_state_name, 
         states=markov_states,
-        output_callback=output_callback
+        output_callback=output_callback,
+        global_input=global_input,
     )
     print(f'markov_rpa: {markov_rpa}')
     
