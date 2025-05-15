@@ -8,7 +8,12 @@ from enum import StrEnum
 
 from anthropic import APIResponse
 from anthropic.types.beta import BetaContentBlock, BetaMessage, BetaMessageParam, BetaToolUseBlock
-from computer_use_demo.tools import ToolResult, FixActionTool
+from computer_use_demo.tools import (
+    ToolResult, 
+    FixActionTool,
+    MarkovTool, MarkovState, MarkovRPA,
+    
+)
 
 
 import torch
@@ -26,6 +31,13 @@ from computer_use_demo.gui_agent.llm_utils.oai import encode_image
 
 from computer_use_demo.tools.logger import logger
 
+
+from io import BytesIO
+import base64
+from PIL import Image
+from computer_use_demo.tools import ToolResult, FixActionTool, ComputerTool, AnthropicExtractor
+from computer_use_demo.tools.fix_action import compute_hash
+import asyncio
 
 
 class APIProvider(StrEnum):
@@ -320,3 +332,107 @@ def actions_loop_sync(
             "content": tool_result_content,
             "role": "user"
         })
+
+
+def capture_screenshot_dhash():
+    # Capture the screenshot. This returns a PIL Image.
+    def base64_to_pil(base64_string: str) -> Image.Image:
+        # Sometimes the base64 string may include metadata like "data:image/png;base64,"
+        # We remove this header if it's present.
+        if base64_string.startswith("data:"):
+            base64_string = base64_string.split(",")[1]
+        
+        # Decode the base64 string into bytes
+        image_data = base64.b64decode(base64_string)
+        
+        # Create a BytesIO stream from the bytes data
+        image_bytes = BytesIO(image_data)
+        
+        # Open the image with PIL
+        image = Image.open(image_bytes)
+        return image
+    computer = ComputerTool(selected_screen=0)
+    computer.to_params()
+    toolresult = asyncio.run(computer.screenshot())
+    pil_image = base64_to_pil(toolresult.base64_image)
+    return pil_image, compute_hash(pil_image)
+
+
+def markov_actions_loop(
+    # *,
+    markov_message: dict,
+    # actions: list[BetaToolUseBlock],
+    output_callback: Callable[[BetaContentBlock], None],
+    # tool_output_callback: Callable[[ToolResult, str], None],
+    actor_provider: APIProvider | None,
+    system_prompt_suffix: str,
+    api_key: str,
+    api_response_callback: Callable[[APIResponse[BetaMessage]], None],
+    max_tokens: int = 4096,
+    # selected_screen: int = 0,
+    max_iterations: int=10,
+    timeout_seconds=None,
+):
+    
+    extractor = AnthropicExtractor(
+        provider=actor_provider, 
+        system_prompt_suffix=system_prompt_suffix, 
+        api_key=api_key, 
+        api_response_callback=api_response_callback,
+        max_tokens=max_tokens,
+    )
+    
+    # print(f'markov_message: {markov_message}')
+    message = f'markov_message: {markov_message}'[:100]
+    output_callback(message, sender="bot")
+    yield message
+    
+    
+    states = markov_message.pop('states')
+    initial_state_name = markov_message.pop('initial_state_name')
+    
+    markov_states = []
+    # Create MarkovState objects from the states
+    for state in states:
+        state_name = state.pop('name')
+        tools = state.pop('tools', [])
+        is_terminal = state.pop('is_terminal', False)
+        markov_tools = []
+        for tool in tools:
+            tool_name = tool.pop('name')
+            tool_description = tool.pop('description', None)
+            embedded_images = tool.pop('embedded_images', None)
+            actions = tool.pop('actions', None)
+            target_state = tool.pop('target_state', None)
+            markov_tool = MarkovTool(
+                name=tool_name,
+                description=tool_description,
+                embedded_images=embedded_images,
+                actions=actions,
+                target_state=target_state,
+                extractor=extractor,
+                output_callback=output_callback,
+            )
+            print(f'markov_tool: {markov_tool}')
+            markov_tools.append(markov_tool)
+        markov_state = MarkovState(
+            name=state_name, 
+            tools=markov_tools, 
+            is_terminal=is_terminal,
+            output_callback=output_callback
+        )
+        print(f'markov_state: {markov_state}')
+        markov_states.append(markov_state)
+    
+    markov_rpa = MarkovRPA(
+        initial_state_name=initial_state_name, 
+        states=markov_states,
+        output_callback=output_callback
+    )
+    print(f'markov_rpa: {markov_rpa}')
+    
+    for loop_msp in markov_rpa.run(max_iterations=max_iterations, timeout_seconds=timeout_seconds):
+        yield loop_msp
+    
+    
+    

@@ -6,6 +6,8 @@ from .computer import ComputerTool
 from .edit import EditTool
 from .screen_capture import get_screenshot
 from .fix_action import FixActionTool
+from .markov import MarkovTool, MarkovState, MarkovRPA
+from .extractor import AnthropicExtractor
 
 __ALL__ = [
     BashTool,
@@ -16,4 +18,5 @@ __ALL__ = [
     ToolResult,
     get_screenshot,
     FixActionTool,
+    AnthropicExtractor,
 ]

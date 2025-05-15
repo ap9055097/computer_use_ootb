@@ -30,7 +30,7 @@ logger.info("Starting the gradio app")
 screens = get_monitors()
 logger.info(f"Found {len(screens)} screens")
 
-from computer_use_demo.loop import APIProvider, sampling_loop_sync
+from computer_use_demo.loop import APIProvider, sampling_loop_sync, capture_screenshot_dhash, markov_actions_loop
 
 from computer_use_demo.tools import ToolResult, FixActionTool, ComputerTool
 from computer_use_demo.tools.computer import get_screen_details
@@ -402,31 +402,35 @@ def process_execute_input_v2(user_input_json, state):
             
 
         yield state['chatbot_messages'], tooluses  # Yield the updated chatbot_messages to update the chatbot UI
+        
 
 
+def process_markov_execute_input(user_input_json, state):
+    tooluses = []
+    
+    # state["messages"].append(
+    #         {
+    #             "role": "user",
+    #             "content": [TextBlock(type="text", text="start markov rpa")],
+    #         }
+    #     )
 
-def capture_screenshot_dhash():
-    # Capture the screenshot. This returns a PIL Image.
-    def base64_to_pil(base64_string: str) -> Image.Image:
-        # Sometimes the base64 string may include metadata like "data:image/png;base64,"
-        # We remove this header if it's present.
-        if base64_string.startswith("data:"):
-            base64_string = base64_string.split(",")[1]
-        
-        # Decode the base64 string into bytes
-        image_data = base64.b64decode(base64_string)
-        
-        # Create a BytesIO stream from the bytes data
-        image_bytes = BytesIO(image_data)
-        
-        # Open the image with PIL
-        image = Image.open(image_bytes)
-        return image
-    computer = ComputerTool(selected_screen=0)
-    computer.to_params()
-    toolresult = asyncio.run(computer.screenshot())
-    pil_image = base64_to_pil(toolresult.base64_image)
-    return pil_image, compute_hash(pil_image)
+    # Append the user's message to chatbot_messages with None for the assistant's reply
+    state['chatbot_messages'].append(("start markov rpa", None))
+    yield state['chatbot_messages'], tooluses  # Yield to update the chatbot UI with the user's message
+    
+    # print('user_input', user_input)
+    user_input_dict = json.loads(user_input_json)
+    for loop_msg in markov_actions_loop(
+        markov_message=user_input_dict,
+        actor_provider=state["actor_provider"],
+        system_prompt_suffix=state["custom_system_prompt"],
+        api_key=state["planner_api_key"],
+        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses),
+        # tool_output_callback=partial(_tool_output_callback, tool_state=state["tools"]),
+        api_response_callback=partial(_api_response_callback, response_state=state["responses"]),
+    ):
+        yield state['chatbot_messages'], tooluses
 
 
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
@@ -796,6 +800,13 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 submit_execute_button = gr.Button(value="Exucute", variant="primary")
             with gr.Row(scale=1):
                 submit_execute_button_v2 = gr.Button(value="Exucute V2", variant="primary")
+    
+    with gr.Row():
+        with gr.Column(scale=8):
+            chat_markov_execute_input = gr.TextArea(show_label=False, placeholder="Type a markov execution message to send to Computer Use OOTB...", container=False, lines=7)
+        with gr.Column(scale=1, min_width=50):
+            with gr.Row(scale=1):
+                markov_execute_button = gr.Button(value="Exucute Markov", variant="primary")
 
     chatbot = gr.Chatbot(label="Chatbot History", type="tuples", autoscroll=True, height=580)
     
@@ -816,6 +827,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         with gr.Column(scale=1):
             gr.Markdown("# Screenshot App")
             screenshot_button = gr.Button("Take Screenshot")
+            
+            
     # Bind the button's click event to the capture_screenshot function
     screenshot_button.click(fn=capture_screenshot_dhash, outputs=[screenshot_image, screenshot_image_base64])
     
@@ -840,6 +853,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     submit_button.click(process_input, [chat_input, state], [chatbot, chat_action_output])
     submit_execute_button.click(process_execute_input, [chat_execute_input, state], chatbot)
     submit_execute_button_v2.click(process_execute_input_v2, [chat_execute_input, state], [chatbot, chat_tool_output])
+    markov_execute_button.click(process_markov_execute_input, [chat_markov_execute_input, state], [chatbot, chat_tool_output])
 
     planner_api_key.change(
         fn=update_api_key,
@@ -860,7 +874,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
 
 demo.launch(
-            share=True,
+            # share=True,
+            share=False,
             # share_server_address="rpavialink.com",
             # share_server_address="rpavialink.com:7000",
             # share_server_protocol="https",
