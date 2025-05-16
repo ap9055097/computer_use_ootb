@@ -874,8 +874,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
 
 demo.launch(
-            # share=True,
-            share=False,
+            share=True,
+            # share=False,
             # share_server_address="rpavialink.com",
             # share_server_address="rpavialink.com:7000",
             # share_server_protocol="https",
