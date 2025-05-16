@@ -98,7 +98,8 @@ class AnthropicExtractor:
         selected_screen: int = 0,
         print_usage: bool = True,
     ):
-        self.model = "claude-3-7-sonnet-20250219"
+        # self.model = "claude-3-7-sonnet-20250219"
+        self.model = "claude-3-5-haiku-latest"
         self.provider = provider
         self.system_prompt_suffix = system_prompt_suffix
         self.api_key = api_key
@@ -199,8 +200,9 @@ class AnthropicExtractor:
             model=self.model,
             system=system_prompt,
             messages=messages,
-            temperature=1,
-            thinking={"type": "enabled", "budget_tokens": 1024},
+            temperature=0,
+            # temperature=1,
+            # thinking={"type": "enabled", "budget_tokens": 1024},
         )
 
         self.api_response_callback(cast(APIResponse[BetaMessage], raw_response))
