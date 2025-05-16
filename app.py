@@ -202,7 +202,8 @@ def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses 
                 # somehow can't display via gr.Image
                 # image_data = base64.b64decode(message.base64_image)
                 # return gr.Image(value=Image.open(io.BytesIO(image_data)))
-                message_outputs.append(f'<img src="data:image/png;base64,{message.base64_image}">')
+                # message_outputs.append(f'<img src="data:image/png;base64,{message.base64_image}">')
+                message_outputs.append(f'<screenshot>')
             if message_outputs:
                 return message_outputs
 
