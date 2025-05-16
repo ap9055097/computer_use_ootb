@@ -159,7 +159,7 @@ def _tool_output_callback(tool_output: ToolResult, tool_id: str, tool_state: dic
     tool_state[tool_id] = tool_output
 
 
-def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses = [], enable_tooluse_log = False, hide_images=False, sender="bot"):
+def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses = [], enable_tooluse_logs = False, hide_images=False, sender="bot"):
     
     def _render_message(message: str | BetaTextBlock | BetaToolUseBlock | ToolResult, hide_images=False):
     
@@ -213,8 +213,8 @@ def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses 
             return f"<thinking>{message.thinking}</thinking>"
         elif isinstance(message, BetaToolUseBlock) or isinstance(message, ToolUseBlock):
             task_actions.append(message.input)
-            print('enable_tooluse_log', enable_tooluse_log)
-            if enable_tooluse_log:
+            print('enable_tooluse_logs', enable_tooluse_logs)
+            if enable_tooluse_logs:
                 tooluses.append({message.name: message.input})
             # tooluses.append({message.name: message.input})
             return f"Tool Use: {message.name}\nInput: {message.input}"
@@ -359,7 +359,7 @@ def process_execute_input_v2(user_input_json, state):
             yield res
         return
         
-    enable_tooluse_log = user_input_dict.pop("enable_tooluse_log", False)
+    enable_tooluse_logs = user_input_dict.pop("enable_tooluse_logs", False)
     embedded_image_algo = user_input_dict.pop("embedded_image_algo", "dhash")
     tools = user_input_dict.pop("tools", [])
     print('tools log', tools)
@@ -392,7 +392,7 @@ def process_execute_input_v2(user_input_json, state):
         actor_model=state["actor_model"],
         actor_provider=state["actor_provider"],
         messages=state["messages"],
-        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses, enable_tooluse_log=enable_tooluse_log),
+        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses, enable_tooluse_logs=enable_tooluse_logs),
         tool_output_callback=partial(_tool_output_callback, tool_state=state["tools"]),
         api_response_callback=partial(_api_response_callback, response_state=state["responses"]),
         api_key=state["planner_api_key"],
@@ -422,20 +422,21 @@ def process_markov_execute_input(user_input_json, state):
     #             "content": [TextBlock(type="text", text="start markov rpa")],
     #         }
     #     )
-    enable_tooluse_log = user_input_dict.pop("enable_tooluse_log", False)
+    user_input_dict = json.loads(user_input_json)
+    enable_tooluse_logs = user_input_dict.pop("enable_tooluse_logs", False)
     
     # Append the user's message to chatbot_messages with None for the assistant's reply
     state['chatbot_messages'].append(("start markov rpa", None))
     yield state['chatbot_messages'], tooluses  # Yield to update the chatbot UI with the user's message
     
     # print('user_input', user_input)
-    user_input_dict = json.loads(user_input_json)
+    
     for loop_msg in markov_actions_loop(
         markov_message=user_input_dict,
         actor_provider=state["actor_provider"],
         system_prompt_suffix=state["custom_system_prompt"],
         api_key=state["planner_api_key"],
-        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses, enable_tooluse_log=enable_tooluse_log),
+        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses, enable_tooluse_logs=enable_tooluse_logs),
         # tool_output_callback=partial(_tool_output_callback, tool_state=state["tools"]),
         api_response_callback=partial(_api_response_callback, response_state=state["responses"]),
     ):
