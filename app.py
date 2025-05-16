@@ -202,8 +202,8 @@ def chatbot_output_callback(message, chatbot_state, task_actions = [], tooluses 
                 # somehow can't display via gr.Image
                 # image_data = base64.b64decode(message.base64_image)
                 # return gr.Image(value=Image.open(io.BytesIO(image_data)))
-                # message_outputs.append(f'<img src="data:image/png;base64,{message.base64_image}">')
-                message_outputs.append(f'<screenshot>')
+                message_outputs.append(f'<img src="data:image/png;base64,{message.base64_image}">')
+                # message_outputs.append(f'<screenshot>')
             if message_outputs:
                 return message_outputs
 
@@ -353,6 +353,13 @@ def process_execute_input_v2(user_input_json, state):
     # print('user_input', json.loads(user_input_json))
     user_input_dict = json.loads(user_input_json)
     
+    execute_type = user_input_dict.pop("execute_type", None)
+    if execute_type and execute_type.lower() == "markov":
+        for res in process_markov_execute_input(user_input_json, state):
+            yield res
+        return
+        
+    enable_tooluse_log = user_input_dict.pop("enable_tooluse_log", False)
     embedded_image_algo = user_input_dict.pop("embedded_image_algo", "dhash")
     tools = user_input_dict.pop("tools", [])
     print('tools log', tools)
@@ -385,7 +392,7 @@ def process_execute_input_v2(user_input_json, state):
         actor_model=state["actor_model"],
         actor_provider=state["actor_provider"],
         messages=state["messages"],
-        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses),
+        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses, enable_tooluse_log=enable_tooluse_log),
         tool_output_callback=partial(_tool_output_callback, tool_state=state["tools"]),
         api_response_callback=partial(_api_response_callback, response_state=state["responses"]),
         api_key=state["planner_api_key"],
@@ -415,7 +422,8 @@ def process_markov_execute_input(user_input_json, state):
     #             "content": [TextBlock(type="text", text="start markov rpa")],
     #         }
     #     )
-
+    enable_tooluse_log = user_input_dict.pop("enable_tooluse_log", False)
+    
     # Append the user's message to chatbot_messages with None for the assistant's reply
     state['chatbot_messages'].append(("start markov rpa", None))
     yield state['chatbot_messages'], tooluses  # Yield to update the chatbot UI with the user's message
@@ -427,7 +435,7 @@ def process_markov_execute_input(user_input_json, state):
         actor_provider=state["actor_provider"],
         system_prompt_suffix=state["custom_system_prompt"],
         api_key=state["planner_api_key"],
-        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses),
+        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses, enable_tooluse_log=enable_tooluse_log),
         # tool_output_callback=partial(_tool_output_callback, tool_state=state["tools"]),
         api_response_callback=partial(_api_response_callback, response_state=state["responses"]),
     ):
