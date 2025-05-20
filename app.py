@@ -423,7 +423,8 @@ def process_markov_execute_input(user_input_json, state):
     #         }
     #     )
     user_input_dict = json.loads(user_input_json)
-    enable_tooluse_logs = user_input_dict.pop("enable_tooluse_logs", False)
+    # enable_tooluse_logs = user_input_dict.pop("enable_tooluse_logs", False)
+    # enable_tooluse_logs = False
     
     # Append the user's message to chatbot_messages with None for the assistant's reply
     state['chatbot_messages'].append(("start markov rpa", None))
@@ -436,7 +437,7 @@ def process_markov_execute_input(user_input_json, state):
         actor_provider=state["actor_provider"],
         system_prompt_suffix=state["custom_system_prompt"],
         api_key=state["planner_api_key"],
-        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses, enable_tooluse_logs=enable_tooluse_logs),
+        output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses),
         # tool_output_callback=partial(_tool_output_callback, tool_state=state["tools"]),
         api_response_callback=partial(_api_response_callback, response_state=state["responses"]),
     ):
