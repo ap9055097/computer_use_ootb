@@ -54,6 +54,7 @@ class MarkovTool:
         target_state: str=None,
         extractor: AnthropicExtractor | None = None,
         output_callback: Callable[[str], None] = None,
+        tooluse_log: bool = False,
         
     ):
         self.name = name
@@ -66,6 +67,7 @@ class MarkovTool:
         self.target_state = target_state
         self.extractor = extractor
         self.output_callback = output_callback or (lambda x: None)
+        self.tooluse_log = tooluse_log
         
     
     def execute_actions(
@@ -93,7 +95,7 @@ class MarkovTool:
             type="tool_use",
         )
         
-        self.output_callback(tooluse_message, sender="bot")
+        self.output_callback(tooluse_message, enable_tooluse_logs=self.tooluse_log, sender="bot")
         
         
         result: ToolResult = asyncio.run(
@@ -102,7 +104,7 @@ class MarkovTool:
                 description=self.description,
                 input_schema=self.input_schema,
                 actions=self.actions,
-                tooluse_log=False,
+                tooluse_log=self.tooluse_log,
             )(**input_value)
         )
         return result

@@ -407,6 +407,7 @@ def markov_actions_loop(
             input_schema = tool.pop('input_schema', {})
             actions = tool.pop('actions', None)
             target_state = tool.pop('target_state', None)
+            tooluse_log = tool.pop('tooluse_log', False)
             markov_tool = MarkovTool(
                 name=tool_name,
                 description=tool_description,
@@ -417,6 +418,7 @@ def markov_actions_loop(
                 target_state=target_state,
                 extractor=extractor,
                 output_callback=output_callback,
+                tooluse_log=tooluse_log,
             )
             print(f'markov_tool: {markov_tool}')
             markov_tools.append(markov_tool)
