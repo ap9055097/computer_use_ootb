@@ -884,15 +884,22 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
     
 
+# demo.launch(
+#             share=True,
+#             # share=False,
+#             # share_server_address="rpavialink.com",
+#             share_server_address="rpavialink.com:7000",
+#             share_server_protocol="https",
+#             # share_server_tls_certificate="/etc/frp/cert.pem",
+#             # share_server_tls_certificate="cert.pem",
+#             # ssl_verify=False,
+#             allowed_paths=["./"],
+#             server_port=7888)  # TODO: allowed_paths
+
 demo.launch(
             share=True,
-            # share=False,
-            # share_server_address="rpavialink.com",
-            # share_server_address="rpavialink.com:7000",
-            # share_server_protocol="https",
-            # share_server_tls_certificate="/etc/frp/cert.pem",
-            # share_server_tls_certificate="cert.pem",
-            # ssl_verify=False,
+            share_server_address="rpavialink.com:7000",
+            share_server_protocol="https",
             allowed_paths=["./"],
             server_port=7888)  # TODO: allowed_paths
 
