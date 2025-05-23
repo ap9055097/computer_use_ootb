@@ -99,7 +99,8 @@ class AnthropicExtractor:
         print_usage: bool = True,
     ):
         # self.model = "claude-3-7-sonnet-20250219"
-        self.model = "claude-3-5-haiku-latest"
+        # self.model = "claude-3-5-haiku-latest"
+        self.model = "claude-sonnet-4-20250514"
         self.provider = provider
         self.system_prompt_suffix = system_prompt_suffix
         self.api_key = api_key
