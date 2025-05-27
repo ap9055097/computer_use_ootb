@@ -47,29 +47,6 @@ PROVIDER_TO_DEFAULT_MODEL_NAME: dict[APIProvider, str] = {
     APIProvider.VERTEX: "claude-3-5-sonnet-v2@20241022",
 }
 
-
-# Check OS
-# SYSTEM_PROMPT = f"""<SYSTEM_CAPABILITY>
-# * You are utilizing a Windows system with internet access.
-# * The current date is {datetime.today().strftime('%A, %B %d, %Y')}.
-# </SYSTEM_CAPABILITY>
-# """
-
-# SYSTEM_PROMPT = (
-#     "You are an OCR specialist. Given an image, extract **only** the following three fields "
-#     "and output them as a single JSON object exactly conforming to this JSON Schema:\n\n"
-#     "{\n"
-#     '  "type": "object",\n'
-#     '  "properties": {\n'
-#     '    "item_barcode": {"type": "string"},\n'
-#     '    "item_qty":     {"type": "string"},\n'
-#     '    "item_unit":    {"type": "string"}\n'
-#     "  },\n"
-#     '  "required": ["item_barcode","item_qty","item_unit"]\n'
-#     "}\n\n"
-#     "Respond **only** with the JSON object—no extra text.\n"
-# )
-
 SYSTEM_PROMPT = (
     "You are an OCR specialist. Given an image, extract **only** the following three fields "
     "and output them as a single JSON object exactly conforming to this JSON Schema:\n\n"
@@ -138,12 +115,6 @@ class AnthropicExtractor:
         input_instruction: str =  None,
     ):
         schema_str = json.dumps(input_schema, indent=2)
-        # system_prompt = (
-        #     "You are an OCR specialist. Given an image, extract **only** the following fields "
-        #     "and output them as a single JSON object exactly conforming to this JSON Schema:\n\n"
-        #     f"{schema_str}\n\n"
-        #     "Respond **only** with the JSON object—no extra text."
-        # )
         system_prompt = (
             "You are a data-extraction specialist. Given the following input—which may be "
             "either an image or a plain-text message—extract **only** the fields defined "
@@ -172,29 +143,11 @@ class AnthropicExtractor:
             content_blocks.append({"type": "text", "text": text})
         if input_instruction:
             content_blocks.append({"type": "text", "text": input_instruction})
-        # print('content_blocks', content_blocks)
+            
         messages = [{
             "role": "user",
             "content": content_blocks
         }]
-        # image_block = {
-        #     "type": "image",
-        #     "source": {
-        #         "type": "base64",               # Required
-        #         "media_type": "image/png",      # Must match your file format
-        #         "data": image_base64                 # The actual base64 string
-        #     }
-        # }
-        # messages = [
-        #     {
-        #         "role": "user",
-        #         "content": [
-        #             {"type": "text", "text": "Here is the image to process:"},
-        #             image_block,
-        #         ]
-        #     }
-        # ]
-
         
         raw_response = self.client.messages.with_raw_response.create(
             max_tokens=self.max_tokens,

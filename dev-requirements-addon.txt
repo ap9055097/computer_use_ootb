@@ -2,3 +2,4 @@ pynput
 gunicorn
 imagehash
 Pillow
+google-generativeai

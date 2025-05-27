@@ -35,7 +35,7 @@ from computer_use_demo.tools.logger import logger
 from io import BytesIO
 import base64
 from PIL import Image
-from computer_use_demo.tools import ToolResult, FixActionTool, ComputerTool, AnthropicExtractor
+from computer_use_demo.tools import ToolResult, FixActionTool, ComputerTool, AnthropicExtractor, GeminiExtractor
 from computer_use_demo.tools.fix_action import compute_hash
 import asyncio
 
@@ -367,6 +367,7 @@ def markov_actions_loop(
     actor_provider: APIProvider | None,
     system_prompt_suffix: str,
     api_key: str,
+    gemini_api_key: str,
     api_response_callback: Callable[[APIResponse[BetaMessage]], None],
     max_tokens: int = 4096,
     # selected_screen: int = 0,
@@ -374,12 +375,19 @@ def markov_actions_loop(
     timeout_seconds=None,
 ):
     
-    extractor = AnthropicExtractor(
-        provider=actor_provider, 
-        system_prompt_suffix=system_prompt_suffix, 
-        api_key=api_key, 
+    # extractor = AnthropicExtractor(
+    #     provider=actor_provider, 
+    #     system_prompt_suffix=system_prompt_suffix, 
+    #     api_key=api_key, 
+    #     api_response_callback=api_response_callback,
+    #     max_tokens=max_tokens,
+    # )
+    
+    gemini_extractor = GeminiExtractor(
+        google_api_key=gemini_api_key,
+        system_prompt_suffix=system_prompt_suffix,
         api_response_callback=api_response_callback,
-        max_tokens=max_tokens,
+        max_tokens=max_tokens, 
     )
     
     # print(f'markov_message: {markov_message}')
@@ -416,7 +424,8 @@ def markov_actions_loop(
                 input_schema=input_schema,
                 actions=actions,
                 target_state=target_state,
-                extractor=extractor,
+                # extractor=extractor,
+                extractor=gemini_extractor,
                 output_callback=output_callback,
                 tooluse_log=tooluse_log,
             )

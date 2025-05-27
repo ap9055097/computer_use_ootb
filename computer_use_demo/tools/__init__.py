@@ -8,6 +8,7 @@ from .screen_capture import get_screenshot
 from .fix_action import FixActionTool
 from .markov import MarkovTool, MarkovState, MarkovRPA
 from .extractor import AnthropicExtractor
+from .gemini_extractor import GeminiExtractor
 
 __ALL__ = [
     BashTool,
@@ -19,4 +20,5 @@ __ALL__ = [
     get_screenshot,
     FixActionTool,
     AnthropicExtractor,
+    GeminiExtractor,
 ]

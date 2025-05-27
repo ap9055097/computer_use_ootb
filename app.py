@@ -76,6 +76,8 @@ def setup_state(state):
         state["qwen_api_key"] = os.getenv("QWEN_API_KEY", "")
     if "ui_tars_url" not in state:
         state["ui_tars_url"] = ""
+    if "gemini_api_key" not in state:
+        state["gemini_api_key"] = os.getenv("GEMINI_API_KEY", "")    
 
     # Set the initial api_key based on the provider
     if "planner_api_key" not in state:
@@ -415,16 +417,7 @@ def process_execute_input_v2(user_input_json, state):
 
 def process_markov_execute_input(user_input_json, state):
     tooluses = []
-    
-    # state["messages"].append(
-    #         {
-    #             "role": "user",
-    #             "content": [TextBlock(type="text", text="start markov rpa")],
-    #         }
-    #     )
     user_input_dict = json.loads(user_input_json)
-    # enable_tooluse_logs = user_input_dict.pop("enable_tooluse_logs", False)
-    # enable_tooluse_logs = False
     
     # Append the user's message to chatbot_messages with None for the assistant's reply
     state['chatbot_messages'].append(("start markov rpa", None))
@@ -437,6 +430,7 @@ def process_markov_execute_input(user_input_json, state):
         actor_provider=state["actor_provider"],
         system_prompt_suffix=state["custom_system_prompt"],
         api_key=state["planner_api_key"],
+        gemini_api_key=state["gemini_api_key"],
         output_callback=partial(chatbot_output_callback, chatbot_state=state['chatbot_messages'], hide_images=state["hide_images"], tooluses=tooluses),
         # tool_output_callback=partial(_tool_output_callback, tool_state=state["tools"]),
         api_response_callback=partial(_api_response_callback, response_state=state["responses"]),
@@ -487,6 +481,15 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                     type="password",
                     value=state.value.get("planner_api_key", ""),
                     placeholder="Paste your planner model API key",
+                    interactive=True,
+                )
+
+            with gr.Column():
+                gemini_api_key = gr.Textbox(
+                    label="Gemini API Key",
+                    type="password",
+                    value=state.value.get("gemini_api_key", ""),
+                    placeholder="Paste your Gemini model API key",
                     interactive=True,
                 )
 
@@ -756,6 +759,12 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         if state["planner_provider"] == "ssh":
             state["api_key"] = api_key_value
         logger.info(f"API key updated: provider={state['planner_provider']}, api_key={state['api_key']}")
+        
+    def update_gemini_api_key(api_key_value, state):
+        """Handle Gemini API key updates"""
+        state["gemini_api_key"] = api_key_value
+        logger.info(f"Gemini API key updated: gemini_api_key={state['gemini_api_key']}")
+        
 
     with gr.Accordion("Quick Start Prompt", open=False):  # open=False 表示默认收
         # Initialize Gradio interface with the dropdowns
@@ -844,7 +853,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     screenshot_button.click(fn=capture_screenshot_dhash, outputs=[screenshot_image, screenshot_image_base64])
     
     planner_model.change(fn=update_planner_model, inputs=[planner_model, state], outputs=[planner_api_provider, planner_api_key, actor_model])
-    planner_api_provider.change(fn=update_api_key_placeholder, inputs=[planner_api_provider, planner_model], outputs=planner_api_key)
+    planner_api_provider.change(fn=update_api_key_placeholder, inputs=[planner_api_provider, planner_model], outputs=[planner_api_key])
     actor_model.change(fn=update_actor_model, inputs=[actor_model, state], outputs=None)
 
     screen_selector.change(fn=update_selected_screen, inputs=[screen_selector, state], outputs=None)
@@ -869,6 +878,12 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     planner_api_key.change(
         fn=update_api_key,
         inputs=[planner_api_key, state],
+        outputs=None
+    )
+    
+    gemini_api_key.change(
+        fn=update_gemini_api_key,
+        inputs=[gemini_api_key, state],
         outputs=None
     )
     
@@ -898,6 +913,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 
 demo.launch(
             share=True,
+            # share=False,
             share_server_address="rpavialink.com:7000",
             share_server_protocol="https",
             allowed_paths=["./"],
