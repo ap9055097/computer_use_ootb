@@ -784,7 +784,14 @@ class ComputerTool(BaseAnthropicTool):
                 raise RuntimeError("Failed to get screen resolution on Linux.")
 
         # Take screenshot using the bounding box
-        screenshot = ImageGrab.grab(bbox=bbox)
+        # screenshot = ImageGrab.grab(bbox=bbox)
+        for attempt in range(3):
+            try:
+                screenshot = ImageGrab.grab(bbox=bbox)
+                print("Screenshot taken successfully!")
+                break
+            except OSError as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
 
         # Set offsets (for potential future use)
         self.offset_x = screen['x'] if system == "Darwin" else screen.x
