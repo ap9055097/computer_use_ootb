@@ -49,7 +49,7 @@ class GeminiExtractor:
         # provider: APIProvider, # Removed, specific to Google Gemini now
         google_api_key: str,
         # model_name: str = "gemini-1.5-pro-latest", # User requested 2.5 Pro, use appropriate identifier
-        model_name: str = "gemini-3-pro-preview",
+        model_name: str = "gemini-2.5-flash",
         system_prompt_suffix: str = "",
         api_response_callback: Callable[[GenerateContentResponse], None] | None = None, # Adjusted type hint
         max_tokens: int = 4096,
@@ -91,12 +91,24 @@ class GeminiExtractor:
 
         self.total_token_usage = 0
         self.total_cost = 0 # TODO: Implement Gemini-specific cost calculation
-        self.safety_settings = {
-            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-        }
+        self.safety_settings = self.safety_settings = [
+            {
+                "category": HarmCategory.HARM_CATEGORY_HARASSMENT,
+                "threshold": HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            },
+            {
+                "category": HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                "threshold": HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            },
+            {
+                "category": HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                "threshold": HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            },
+            {
+                "category": HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                "threshold": HarmBlockThreshold.BLOCK_ONLY_HIGH,
+            },
+        ]
 
     def __call__(
         self,
@@ -169,12 +181,15 @@ class GeminiExtractor:
         print(f"Input instruction in parts: {input_instruction is not None}")
         print(f"---")
 
-        response = model_for_this_call.generate_content(
-            contents=prompt_parts_for_user_turn, # This IS using prompt_parts_for_user_turn
-            generation_config=generation_config,
-            # safety_settings=safety_settings
-            safety_settings=self.safety_settings
-        )
+        try:
+            response = model_for_this_call.generate_content(
+                contents=prompt_parts_for_user_turn,
+                generation_config=generation_config,
+                safety_settings=self.safety_settings
+            )
+        except Exception as e:
+            print(f"Error calling Gemini API: {e}")
+            raise
 
         # ... (rest of the response processing remains the same)
         if self.api_response_callback:
