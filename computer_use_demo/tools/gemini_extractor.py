@@ -48,7 +48,7 @@ class GeminiExtractor:
         # provider: APIProvider, # Removed, specific to Google Gemini now
         google_api_key: str,
         # model_name: str = "gemini-1.5-pro-latest", # User requested 2.5 Pro, use appropriate identifier
-        model_name: str = "gemini-3-pro-preview",
+        model_name: str = "gemini-2.5-pro",
         system_prompt_suffix: str = "",
         api_response_callback: Callable[[GenerateContentResponse], None] | None = None, # Adjusted type hint
         max_tokens: int = 4096,
