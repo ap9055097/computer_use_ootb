@@ -12,6 +12,7 @@ from typing import Any, cast, Dict, Literal
 
 import google.generativeai as genai
 from google.generativeai.types import GenerationConfig, ContentDict, PartDict
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from google.generativeai.types import GenerateContentResponse # For type hinting the callback
 
 from PIL import Image # Retained for potential future use, not strictly needed for base64
@@ -48,7 +49,7 @@ class GeminiExtractor:
         # provider: APIProvider, # Removed, specific to Google Gemini now
         google_api_key: str,
         # model_name: str = "gemini-1.5-pro-latest", # User requested 2.5 Pro, use appropriate identifier
-        model_name: str = "gemini-2.5-pro",
+        model_name: str = "gemini-3-pro-preview",
         system_prompt_suffix: str = "",
         api_response_callback: Callable[[GenerateContentResponse], None] | None = None, # Adjusted type hint
         max_tokens: int = 4096,
@@ -90,6 +91,12 @@ class GeminiExtractor:
 
         self.total_token_usage = 0
         self.total_cost = 0 # TODO: Implement Gemini-specific cost calculation
+        self.safety_settings = {
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+        }
 
     def __call__(
         self,
@@ -166,6 +173,7 @@ class GeminiExtractor:
             contents=prompt_parts_for_user_turn, # This IS using prompt_parts_for_user_turn
             generation_config=generation_config,
             # safety_settings=safety_settings
+            safety_settings=self.safety_settings
         )
 
         # ... (rest of the response processing remains the same)
