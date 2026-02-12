@@ -911,7 +911,8 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 #             allowed_paths=["./"],
 #             server_port=7888)  # TODO: allowed_paths
 
-demo.launch(
+if __name__ == "__main__":
+    demo.launch(
             share=True,
             # share=False,
             share_server_address="rpavialink.com:7000",

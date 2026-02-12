@@ -1,0 +1,47 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'app.py'
+      - 'app_packaged.py'
+      - 'computer_use_demo/**'
+      - 'requirements-api.txt'
+      - 'rpa_engine.spec'
+      - '.github/workflows/build-windows.yml'
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-api.txt
+          pip install pyinstaller
+
+      - name: Build executable
+        run: |
+          pyinstaller rpa_engine.spec
+
+      - name: List output files
+        run: |
+          dir dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RPA-Engine-Windows
+          path: dist/RPA-Engine.exe
+          retention-days: 30
