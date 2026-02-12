@@ -1,6 +1,8 @@
 import time
 import asyncio
+import ast
 import base64
+import re
 from PIL import Image
 from io import BytesIO
 from .fix_action import (
@@ -68,25 +70,84 @@ class MarkovTool:
         self.extractor = extractor
         self.output_callback = output_callback or (lambda x: None)
         self.tooluse_log = tooluse_log
-        
-    
+
+    def _clean_text_for_parsing(self, text: str) -> str:
+        """Clean text string before attempting to parse as Python literal."""
+        if not text:
+            return ""
+
+        text = text.strip()
+
+        # Remove markdown code block markers if present
+        text = re.sub(r'^```\w*\n?|```$', '', text, flags=re.MULTILINE).strip()
+
+        # Remove outer string quotes if the whole thing is wrapped
+        # e.g., "'[{...}]'" -> "[{...}]"
+        while len(text) >= 2:
+            if (text.startswith("'") and text.endswith("'")) or \
+               (text.startswith('"') and text.endswith('"')):
+                inner = text[1:-1]
+                # Only unwrap if inner looks like a dict/list
+                if inner.strip().startswith(('[', '{')):
+                    text = inner
+                else:
+                    break
+            else:
+                break
+
+        return text.strip()
+
+    def _try_extract_dict_from_text(self, text: str) -> dict | None:
+        """
+        Attempt to extract a dict from text.
+        Returns None if extraction fails. Extracts ALL keys found in text.
+        """
+        cleaned = self._clean_text_for_parsing(text)
+        if not cleaned:
+            return None
+
+        try:
+            parsed = ast.literal_eval(cleaned)
+
+            # Normalize to single dict (take first item if list)
+            if isinstance(parsed, list) and len(parsed) > 0:
+                parsed = parsed[0]
+
+            if not isinstance(parsed, dict):
+                return None
+
+            return parsed
+        except (ValueError, SyntaxError, TypeError):
+            return None
+
     def execute_actions(
-        self, 
+        self,
         image_base64: str = None,
         text: str = None,
     ) -> ToolResult:
-        # print(f"[Tool] Executing actions for tool '{self.name}'... text: {text}")
+        input_value = {}
+
+        # 1. Auto-extract from text (extracts all keys found in text)
+        if text:
+            auto_extracted = self._try_extract_dict_from_text(text)
+            if auto_extracted:
+                input_value.update(auto_extracted)
+                print(f"[Tool] Auto-extracted from text: {auto_extracted}")
+
+        # 2. LLM extraction (uses schema to extract from image/text)
         if self.input_schema and self.input_schema.get("properties"):
-            input_value = self.extractor(
-                image_base64=image_base64, 
-                text=text, 
+            llm_extracted = self.extractor(
+                image_base64=image_base64,
+                text=text,
                 input_schema=self.input_schema,
                 input_type=self.input_type,
                 input_instruction=self.input_instruction,
             )
-        else:
-            input_value = {}
-        print(f"[Tool] Extracted input value: {input_value}")
+            if llm_extracted:
+                input_value.update(llm_extracted)
+                print(f"[Tool] LLM extracted: {llm_extracted}")
+
+        print(f"[Tool] Final merged input value: {input_value}")
         # message = f"[Tool] Extracted input value: {input_value}"
         tooluse_message = BetaToolUseBlock(
             id=self.name,
