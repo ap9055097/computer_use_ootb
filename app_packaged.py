@@ -21,12 +21,17 @@ else:
 # Add base dir to path so we can import app module
 sys.path.insert(0, BASE_DIR)
 
-# Import the demo from original app.py
+# IMPORTANT: Set this BEFORE importing app.py to prevent auto-launch
+# This allows us to customize the launch settings
+os.environ["GRADIO_SKIP_LAUNCH"] = "1"
+
+# Import the demo from original app.py (won't auto-launch due to env var)
 from app import demo
 
 
 def main():
     """Launch the Gradio demo with URL capture and display."""
+    import time
 
     # Launch with URL capture
     app, local_url, share_url = demo.launch(
@@ -67,8 +72,12 @@ def main():
         # Notification failed, not critical
         print(f"Warning: Could not show notification: {e}")
 
-    # Keep the server running
-    demo.block()
+    # Keep the server running (block forever)
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nShutting down...")
 
 
 if __name__ == "__main__":

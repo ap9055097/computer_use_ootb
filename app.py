@@ -911,14 +911,32 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 #             allowed_paths=["./"],
 #             server_port=7888)  # TODO: allowed_paths
 
-if __name__ == "__main__":
-    demo.launch(
+# Check if we should skip auto-launch (for app_packaged.py to customize launch settings)
+_SKIP_LAUNCH = os.getenv("GRADIO_SKIP_LAUNCH", "").lower() in ("1", "true", "yes")
+# Check if running under uvicorn (uvicorn sets this)
+_RUNNING_UNDER_UVICORN = "uvicorn" in os.getenv("SERVER_SOFTWARE", "")
+
+if not _SKIP_LAUNCH:
+    if __name__ == "__main__":
+        # Running directly with `python app.py` - launch and block
+        demo.launch(
             share=True,
-            # share=False,
             share_server_address="rpavialink.com:7000",
             share_server_protocol="https",
             allowed_paths=["./"],
-            server_port=7888)  # TODO: allowed_paths
+            server_port=7888)  # This blocks by default
+    else:
+        # Being imported (e.g., by uvicorn) - launch without blocking
+        _gradio_app, _local_url, _share_url = demo.launch(
+            share=True,
+            share_server_address="rpavialink.com:7000",
+            share_server_protocol="https",
+            allowed_paths=["./"],
+            server_port=7888,
+            prevent_thread_lock=True)  # Don't block, allows uvicorn to take over
+
+        # Export the ASGI app for uvicorn (uvicorn app:app)
+        app = demo.app
 
 # queue = demo.queue()
 # _, _, tunnel_adress = queue.launch(
