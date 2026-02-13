@@ -7,4 +7,5 @@ REM 2. Activate the virtual environment
 call .venv\Scripts\activate.bat
 
 REM 3. Start Uvicorn (you can also use python -m uvicorn…)
-uvicorn app:app --host 127.0.0.1 --port 7888 --loop asyncio
+REM Note: app:demo because Gradio Blocks is an ASGI app, no need to call demo.launch()
+uvicorn app:demo --host 127.0.0.1 --port 7888 --loop asyncio
