@@ -3,13 +3,6 @@ name: Build Windows Executable
 on:
   push:
     branches: [build]
-    paths:
-      - 'app.py'
-      - 'app_packaged.py'
-      - 'computer_use_demo/**'
-      - 'requirements-api.txt'
-      - 'rpa_engine.spec'
-      - '.github/workflows/build-windows.yml'
   workflow_dispatch:  # Allow manual trigger from GitHub UI
 
 jobs:
