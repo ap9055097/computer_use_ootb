@@ -1,0 +1,37 @@
+# Requirements for testing on macOS (excludes Windows-only packages)
+# Used by: uv run --with-requirements requirements-test-macos.txt python test_imports.py
+
+# From dev-requirements.txt (with version constraints)
+pyautogui==0.9.54
+anthropic[bedrock,vertex]>=0.37.1
+jsonschema==4.22.0
+boto3>=1.28.57
+google-auth<3,>=2
+gradio>=5.6.0,<6.0.0
+screeninfo
+# uiautomation  # Windows-only - skipped
+numpy<2
+pydantic>=2.0.0,<2.11.0
+
+# From dev-requirements-addon.txt
+pynput
+imagehash
+Pillow
+google-generativeai
+
+# Required by gradio_client for share functionality
+huggingface_hub>=0.26.0,<1.0
+
+# Gradio dependencies (ensure they're included for PyInstaller)
+httpx
+websockets
+aiofiles
+python-multipart
+fsspec
+tomlkit
+typer
+rich
+shellingham
+
+# Windows-only packages - SKIPPED for macOS testing
+# win10toast

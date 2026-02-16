@@ -25,6 +25,8 @@ block_cipher = None
 # Collect all Gradio data files (templates, static assets, etc.)
 gradio_datas = collect_data_files('gradio')
 gradio_client_datas = collect_data_files('gradio_client')
+safehttpx_datas = collect_data_files('safehttpx')
+huggingface_hub_datas = collect_data_files('huggingface_hub')
 
 # Hidden imports required for Gradio and dependencies
 hiddenimports = [
@@ -120,6 +122,8 @@ a = Analysis(
         # Gradio data files
         *gradio_datas,
         *gradio_client_datas,
+        *safehttpx_datas,
+        *huggingface_hub_datas,
     ],
     hiddenimports=hiddenimports,
     hookspath=[],
