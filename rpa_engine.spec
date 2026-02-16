@@ -134,7 +134,7 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=['hooks/hook-gradio-runtime.py'],  # Patch Gradio for frozen apps
     excludes=[
         # Exclude ML libraries (not needed for API-only mode)
         'torch',
