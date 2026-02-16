@@ -88,6 +88,11 @@ hiddenimports = [
     # Windows notifications (optional)
     'win10toast',
 
+    # Required by gradio_client for share functionality
+    'huggingface_hub',
+    'huggingface_hub.utils',
+    'huggingface_hub.hf_api',
+
     # App module
     'app',
     'computer_use_demo',
@@ -126,7 +131,7 @@ a = Analysis(
         'torchvision',
         'transformers',
         'accelerate',
-        'huggingface_hub',
+        # 'huggingface_hub',  # NEEDED for gradio_client share functionality
         'qwen_vl_utils',
         'dashscope',
 
