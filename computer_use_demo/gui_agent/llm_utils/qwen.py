@@ -4,7 +4,7 @@ import logging
 import base64
 import requests
 
-import dashscope
+# dashscope import moved inside functions (lazy import for PyInstaller)
 # from computer_use_demo.gui_agent.llm_utils import is_image_path, encode_image
 
 def is_image_path(text):
@@ -15,7 +15,8 @@ def encode_image(image_path):
 
 
 def run_qwen(messages: list, system: str, llm: str, api_key: str, max_tokens=256, temperature=0):
-    
+    import dashscope  # Lazy import - only loads when function is called
+
     api_key = api_key or os.environ.get("QWEN_API_KEY")
     if not api_key:
         raise ValueError("QWEN_API_KEY is not set")
@@ -76,10 +77,12 @@ def run_qwen(messages: list, system: str, llm: str, api_key: str, max_tokens=256
 
 
 if __name__ == "__main__":
+    import dashscope  # Lazy import for direct execution
+
     api_key = os.environ.get("QWEN_API_KEY")
     if not api_key:
         raise ValueError("QWEN_API_KEY is not set")
-    
+
     dashscope.api_key = api_key
     
     final_messages = [{"role": "user",
