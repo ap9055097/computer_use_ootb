@@ -27,6 +27,9 @@ gradio_datas = collect_data_files('gradio')
 gradio_client_datas = collect_data_files('gradio_client')
 safehttpx_datas = collect_data_files('safehttpx')
 huggingface_hub_datas = collect_data_files('huggingface_hub')
+groovy_datas = collect_data_files('groovy')
+httplib2_datas = collect_data_files('httplib2')
+markdown_it_datas = collect_data_files('markdown_it')
 
 # Hidden imports required for Gradio and dependencies
 hiddenimports = [
@@ -124,6 +127,9 @@ a = Analysis(
         *gradio_client_datas,
         *safehttpx_datas,
         *huggingface_hub_datas,
+        *groovy_datas,
+        *httplib2_datas,
+        *markdown_it_datas,
     ],
     hiddenimports=hiddenimports,
     hookspath=[],
