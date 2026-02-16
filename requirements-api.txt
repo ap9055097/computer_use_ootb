@@ -19,5 +19,19 @@ imagehash
 Pillow
 google-generativeai
 
+# Required by gradio_client for share functionality
+huggingface_hub>=0.26.0,<1.0
+
+# Gradio dependencies (ensure they're included for PyInstaller)
+httpx
+websockets
+aiofiles
+python-multipart
+fsspec
+tomlkit
+typer
+rich
+shellingham
+
 # Additional for Windows packaging
 win10toast         # Windows notifications for public URL display

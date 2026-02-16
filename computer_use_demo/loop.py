@@ -16,7 +16,7 @@ from computer_use_demo.tools import (
 )
 
 
-import torch
+# import torch
 
 from computer_use_demo.gui_agent.planner.anthropic_agent import AnthropicActor
 from computer_use_demo.executor.anthropic_executor import AnthropicExecutor
