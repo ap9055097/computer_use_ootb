@@ -49,6 +49,17 @@ sys.stderr.reconfigure(encoding='utf-8')
 pyautogui.FAILSAFE = False
 
 
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and PyInstaller."""
+    if getattr(sys, 'frozen', False):
+        # Running as compiled exe - files are in sys._MEIPASS
+        base_path = sys._MEIPASS
+    else:
+        # Running as script
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path)
+
+
 def setup_state(state):
 
     if "messages" not in state:
@@ -560,7 +571,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 )
             
     # Define the merged dictionary with task mappings
-    merged_dict = json.load(open("assets/examples/ootb_examples.json", "r"))
+    merged_dict = json.load(open(get_resource_path("assets/examples/ootb_examples.json"), "r"))
 
     def update_only_n_images(only_n_images_value, state):
         state["only_n_most_recent_images"] = only_n_images_value
