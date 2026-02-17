@@ -25,7 +25,8 @@ from computer_use_demo.executor.anthropic_executor import AnthropicExecutor
 # from computer_use_demo.gui_agent.planner.local_vlm_planner import LocalVLMPlanner
 # from computer_use_demo.gui_agent.actor.showui_agent import ShowUIActor
 from computer_use_demo.executor.showui_executor import ShowUIExecutor
-from computer_use_demo.gui_agent.actor.uitars_agent import UITARS_Actor
+# UITARS_Actor moved to lazy import (inside if block) to avoid openai dependency
+# from computer_use_demo.gui_agent.actor.uitars_agent import UITARS_Actor
 from computer_use_demo.tools.colorful_text import colorful_text_showui, colorful_text_vlm
 from computer_use_demo.tools.screen_capture import get_screenshot
 from computer_use_demo.gui_agent.llm_utils.oai import encode_image
@@ -207,6 +208,9 @@ def sampling_loop_sync(
             selected_screen=selected_screen
         )
     elif actor_model == "UI-TARS":
+        # Lazy import to avoid openai dependency for non-UITARS users
+        from computer_use_demo.gui_agent.actor.uitars_agent import UITARS_Actor
+
         actor = UITARS_Actor(
             ui_tars_url=ui_tars_url,
             output_callback=output_callback,
