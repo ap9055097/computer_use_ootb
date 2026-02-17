@@ -20,9 +20,10 @@ from computer_use_demo.tools import (
 
 from computer_use_demo.gui_agent.planner.anthropic_agent import AnthropicActor
 from computer_use_demo.executor.anthropic_executor import AnthropicExecutor
-from computer_use_demo.gui_agent.planner.api_vlm_planner import APIVLMPlanner
-from computer_use_demo.gui_agent.planner.local_vlm_planner import LocalVLMPlanner
-from computer_use_demo.gui_agent.actor.showui_agent import ShowUIActor
+# VLM planners moved to lazy imports (inside if blocks) to avoid torch/transformers dependency
+# from computer_use_demo.gui_agent.planner.api_vlm_planner import APIVLMPlanner
+# from computer_use_demo.gui_agent.planner.local_vlm_planner import LocalVLMPlanner
+# from computer_use_demo.gui_agent.actor.showui_agent import ShowUIActor
 from computer_use_demo.executor.showui_executor import ShowUIExecutor
 from computer_use_demo.gui_agent.actor.uitars_agent import UITARS_Actor
 from computer_use_demo.tools.colorful_text import colorful_text_showui, colorful_text_vlm
@@ -111,6 +112,9 @@ def sampling_loop_sync(
         loop_mode = "unified"
 
     elif planner_model in ["gpt-4o", "gpt-4o-mini", "qwen2-vl-max"]:
+        # Lazy imports to avoid torch/transformers dependency for API-only users
+        import torch
+        from computer_use_demo.gui_agent.planner.api_vlm_planner import APIVLMPlanner
 
         if torch.cuda.is_available(): device = torch.device("cuda")
         elif torch.backends.mps.is_available(): device = torch.device("mps")
@@ -130,6 +134,15 @@ def sampling_loop_sync(
         loop_mode = "planner + actor"
 
     elif planner_model == "qwen2-vl-7b-instruct":
+        # Lazy imports to avoid torch/transformers dependency for API-only users
+        import torch
+        from computer_use_demo.gui_agent.planner.local_vlm_planner import LocalVLMPlanner
+
+        if torch.cuda.is_available(): device = torch.device("cuda")
+        elif torch.backends.mps.is_available(): device = torch.device("mps")
+        else: device = torch.device("cpu")
+        logger.info(f"Model inited on device: {device}.")
+
         planner = LocalVLMPlanner(
             model=planner_model,
             provider=planner_provider,
@@ -142,6 +155,10 @@ def sampling_loop_sync(
         )
         loop_mode = "planner + actor"
     elif "ssh" in planner_model:
+        # Lazy imports to avoid torch/transformers dependency for API-only users
+        import torch
+        from computer_use_demo.gui_agent.planner.api_vlm_planner import APIVLMPlanner
+
         if torch.cuda.is_available(): device = torch.device("cuda")
         elif torch.backends.mps.is_available(): device = torch.device("mps")
         else: device = torch.device("cpu") # support: 'cpu', 'mps', 'cuda'
@@ -166,6 +183,9 @@ def sampling_loop_sync(
     # Initialize Actor
     # ---------------------------
     if actor_model == "ShowUI":
+        # Lazy import to avoid torch/transformers dependency for API-only users
+        from computer_use_demo.gui_agent.actor.showui_agent import ShowUIActor
+
         if showui_awq_4bit:
             showui_model_path = "./showui-2b-awq-4bit/"
         else:
