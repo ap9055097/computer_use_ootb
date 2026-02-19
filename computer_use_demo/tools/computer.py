@@ -840,6 +840,8 @@ class ComputerTool(BaseAnthropicTool):
 
     def scale_coordinates(self, source: ScalingSource, x: int, y: int):
         """Scale coordinates to a target maximum resolution."""
+        # Ensure coordinates are integers (may come as strings from JSON)
+        x, y = int(x), int(y)
         if not self._scaling_enabled:
             return x, y
         ratio = self.width / self.height
