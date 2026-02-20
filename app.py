@@ -48,6 +48,17 @@ sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 pyautogui.FAILSAFE = False
 
+import pydantic
+
+_original_model_dump = pydantic.BaseModel.model_dump
+
+def _patched_model_dump(self, **kwargs):
+    if 'by_alias' in kwargs and kwargs['by_alias'] is None:
+        kwargs['by_alias'] = False
+    return _original_model_dump(self, **kwargs)
+
+pydantic.BaseModel.model_dump = _patched_model_dump
+
 
 def get_resource_path(relative_path):
     """Get absolute path to resource, works for dev and PyInstaller."""

@@ -71,7 +71,9 @@ class AnthropicActor:
         additional_tool_collections: list[FixActionTool] = [],
     ):
         self.model = model
-        self.model = "claude-3-7-sonnet-20250219"
+        # self.model = "claude-3-7-sonnet-20250219"
+        self.model = "claude-sonnet-4-5-20250929"
+        
         self.provider = provider
         self.system_prompt_suffix = system_prompt_suffix
         self.api_key = api_key
