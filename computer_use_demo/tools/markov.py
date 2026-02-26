@@ -261,7 +261,7 @@ class MarkovRPA:
         self.global_input = global_input
         
         
-    def run(self, max_iterations=10, timeout_seconds=None):
+    def run(self, max_iterations=100, timeout_seconds=None):
         """
         Run the RPA loop until an end state or iteration/timeout limit is reached.
         """
