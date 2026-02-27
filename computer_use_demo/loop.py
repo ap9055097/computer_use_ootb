@@ -395,7 +395,7 @@ def markov_actions_loop(
     api_response_callback: Callable[[APIResponse[BetaMessage]], None],
     max_tokens: int = 4096,
     # selected_screen: int = 0,
-    max_iterations: int=10,
+    max_iterations: int=100,
     timeout_seconds=None,
 ):
     
