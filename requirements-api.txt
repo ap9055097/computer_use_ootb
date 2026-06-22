@@ -15,6 +15,7 @@ pydantic==2.9.2
 
 # From dev-requirements-addon.txt
 pynput
+pyperclip          # Clipboard paste for Thai/Unicode typing (avoids pynput corruption)
 imagehash
 Pillow
 google-generativeai

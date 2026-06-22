@@ -22,7 +22,8 @@ from .base import BaseAnthropicTool, ToolError, ToolResult
 from .run import run
 
 import re
-from pynput.keyboard import Controller
+import pyperclip
+from pynput.keyboard import Controller, Key
 
 OUTPUT_DIR = "./tmp/outputs"
 
@@ -81,6 +82,41 @@ def contains_thai(text):
 
 def chunks(s: str, chunk_size: int) -> list[str]:
     return [s[i : i + chunk_size] for i in range(0, len(s), chunk_size)]
+
+
+def paste_text(text):
+    """Paste `text` via the clipboard + Ctrl+V instead of synthesizing keystrokes.
+
+    pynput's keyboard.type() corrupts Thai/Unicode on customer Windows machines
+    (chars render as `#` boxes or repeat, e.g. `บบบบบบบ`) because the layout can't
+    map the code points. Pasting bypasses the keyboard layout entirely.
+
+    The original clipboard contents are saved and restored. Clipboard reads/writes
+    are guarded so a clipboard failure doesn't crash the flow. Returns True on
+    success, or False if the clipboard write failed so the caller can fall back to
+    direct typing.
+    """
+    old = ""
+    try:
+        old = pyperclip.paste()
+    except Exception:
+        pass
+    try:
+        pyperclip.copy(text)
+    except Exception:
+        # Clipboard unavailable — signal caller to use the typing fallback.
+        return False
+    time.sleep(0.05)  # let the clipboard settle before pasting
+    keyboard = Controller()
+    with keyboard.pressed(Key.ctrl):
+        keyboard.press('v')
+        keyboard.release('v')
+    time.sleep(0.05)
+    try:
+        pyperclip.copy(old)  # restore original clipboard contents
+    except Exception:
+        pass
+    return True
 
 
 def get_screen_details():
@@ -383,8 +419,9 @@ class ComputerTool(BaseAnthropicTool):
             
             elif action == "type":
                 if contains_thai(text):
-                    keyboard = Controller()
-                    keyboard.type(text)
+                    if not paste_text(text):
+                        # Clipboard unavailable — fall back to direct typing.
+                        Controller().type(text)
                 else:
                     pyautogui.typewrite(text, interval=TYPING_DELAY_MS / 1000)  # Convert ms to seconds
                 # screenshot_base64 = (await self.screenshot()).base64_image
@@ -604,7 +641,12 @@ class ComputerTool(BaseAnthropicTool):
                 return ToolResult(output=f"Pressed keys: {text}")
             
             elif action == "type":
-                pyautogui.typewrite(text, interval=TYPING_DELAY_MS / 1000)  # Convert ms to seconds
+                if contains_thai(text):
+                    if not paste_text(text):
+                        # Clipboard unavailable — fall back to direct typing.
+                        Controller().type(text)
+                else:
+                    pyautogui.typewrite(text, interval=TYPING_DELAY_MS / 1000)  # Convert ms to seconds
                 return ToolResult(output=text)
 
         if action in (

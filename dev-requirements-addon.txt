@@ -1,4 +1,5 @@
 pynput
+pyperclip
 gunicorn
 imagehash
 Pillow

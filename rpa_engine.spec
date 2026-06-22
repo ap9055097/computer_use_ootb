@@ -75,6 +75,7 @@ hiddenimports = [
     'pynput.keyboard._win32',
     'pynput.mouse',
     'pynput.mouse._win32',
+    'pyperclip',
     'pyautogui',
     'uiautomation',
 
